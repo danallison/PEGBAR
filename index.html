@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>*PEG*BAR*</title>
+  <meta name="description" content="*PEG*BAR* LET'S YOU DRAW SQUIGGLY ANIMATED GIFS!!!">
+  <meta name="author" content="Dan Allison">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href='http://fonts.googleapis.com/css?family=Patrick+Hand+SC' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" href="peggy.css">
+</head>
+<body> 
+  <header><h1>*PEG*BAR*</h1></header>
+  <div id="container">
+    
+    <div id="canvas-container"></div>
+
+    <div id="controls-container">
+      <div>frame <span id="current_frame">1</span> of <span id="total_frames">1</span></div>
+      <div id="prev">prev frame</div>
+      <div id="next">next frame</div> 
+      <div id="new">new frame</div> 
+      <div id="play">play</div>
+      <div>.</div>
+      <div id="copy">copy frame</div>
+      <div id="paste">paste frame</div>
+      <div>.</div>
+      <div id="export">export gif</div>
+    </div>
+  </div>
+
+  <script type="text/javascript" src="node_modules/gif.js/dist/gif.js"></script>
+  <script type="text/javascript" src="pegbar.js"></script>
+  <script>
+  PEGBAR.init();
+  // window.PEGBAR = {};
+  // var doc = document;  
+  // var canvas = doc.getElementById('sketchpad');
+  // var context = canvas.getContext('2d');
+  // context.fillStyle = "rgba(255,255,255,0.1)";
+  // context.fillRect(0,0,canvas.width,canvas.height);
+  // var onionCanvas = doc.getElementById('onion');
+  // var onion = onionCanvas.getContext('2d');
+  
+  // // create a drawer which tracks touch movements
+  // var drawer = {
+  //    isDrawing: false,
+  //    mousedown: function(coors){
+  //       context.beginPath();
+  //       context.moveTo(coors.x, coors.y);
+  //       this.isDrawing = true;
+  //    },
+  //    mousemove: function(coors){
+  //       if (this.isDrawing) {
+  //          context.lineTo(coors.x, coors.y);
+  //          context.stroke();
+  //          // var imgData = context.getImageData(0, 0, canvas.width, canvas.height);
+           
+  //          // var i = (coors.x + coors.y * canvas.width) * 4;
+
+  //          // var r = imgData.data[i] = 0;
+  //          // var g = imgData.data[i + 1] = 0;
+  //          // var b = imgData.data[i + 2] = 0;
+  //          // var a = imgData.data[i + 3] = 255;
+           
+  //          // console.log(r, g, b, a);
+
+  //          // context.putImageData(imgData, 0, 0);
+  //       }
+  //    },
+  //    mouseup: function(coors){
+  //       if (this.isDrawing) {
+  //          this.mousemove(coors);
+  //          this.isDrawing = false;
+  //       }
+  //    }
+  // };
+  
+  // // create a function to pass touch events and coordinates to drawer
+  // function draw(event){
+  //    // get the touch coordinates
+  //    var coors = {
+  //       x: event.layerX,
+  //       y: event.layerY
+  //    };
+  //    // pass the coordinates to the appropriate handler
+  //    drawer[event.type](coors);
+  // }
+
+  // // attach the touchstart, touchmove, touchend event listeners.
+  // canvas.addEventListener('mousedown',draw, false);
+  // canvas.addEventListener('mousemove',draw, false);
+  // canvas.addEventListener('mouseup',draw, false);
+
+  // var frms = [], currentFrm = 0;
+  // doc.getElementById("prev").addEventListener('click', function () {
+  //   if (currentFrm > 0) {
+  //     frms[currentFrm] = context.getImageData(0, 0, canvas.width, canvas.height);
+  //     currentFrm -= 1;
+  //     context.putImageData(frms[currentFrm], 0, 0);
+  //     if (currentFrm > 0) {
+  //       onion.putImageData(frms[currentFrm - 1], 0, 0);  
+  //     } else {
+  //       onionCanvas.width = onionCanvas.width;
+  //     }
+  //     changeFrame(); 
+  //   }
+  // });
+
+  // doc.getElementById("next").addEventListener('click', function () {
+  //   frms[currentFrm] = context.getImageData(0, 0, canvas.width, canvas.height);
+  //   currentFrm += 1;
+  //   if (currentFrm >= frms.length) {
+  //     clearCanvas();
+  //     context.fillStyle = "rgba(255,255,255,0.1)";
+  //     context.fillRect(0,0,canvas.width,canvas.height);
+  //     frms[currentFrm] = context.getImageData(0, 0, canvas.width, canvas.height);
+  //   } else {
+  //     context.putImageData(frms[currentFrm], 0, 0);
+  //   }
+  //   onion.putImageData(frms[currentFrm - 1], 0, 0);
+  //   changeFrame();
+  // });
+
+  // function changeFrame () {
+  //   doc.getElementById("current_frame").textContent = currentFrm + 1;
+  //   doc.getElementById("total_frames").textContent = frms.length;
+  // }
+
+  // var playing = false;
+  // var interval = null;
+  // var playButton = doc.getElementById("play");
+
+  // playButton.addEventListener('click', function () {
+  //   if (playing) {
+  //     clearInterval(interval);
+  //     playing = false;
+  //     playButton.textContent = "play";
+  //   } else {
+  //     onionCanvas.width = onionCanvas.width;
+  //     frms[currentFrm] = context.getImageData(0, 0, canvas.width, canvas.height);
+  //     interval = setInterval(function () {
+  //       currentFrm = (currentFrm + 1) % frms.length;
+  //       context.putImageData(frms[currentFrm], 0, 0); 
+  //       changeFrame();
+  //     }, 1000 / 12);
+  //     playing = true;
+  //     playButton.textContent = "stop";
+  //   }
+  // });
+
+  // var copyButton = doc.getElementById("copy");
+  // var clipBoard = null;
+
+  // copyButton.addEventListener('click', function () {
+  //   clipBoard = context.getImageData(0, 0, canvas.width, canvas.height);
+  // });
+
+  // var pasteButton = doc.getElementById("paste");
+  // pasteButton.addEventListener('click', function () {
+  //   clipBoard && context.putImageData(clipBoard, 0, 0);
+  // });
+
+  // doc.getElementById("export").addEventListener('click', exportGif);
+  
+  // // prevent elastic scrolling
+  // doc.body.addEventListener('touchmove',function(event){
+  //   event.preventDefault();
+  // },false); // end body:touchmove
+  
+  // function clearCanvas(){
+  //   canvas.width = canvas.width;
+  // }
+
+  // function exportGif() {
+  //   var gif = new GIF({
+  //     workers: 2,
+  //     quality: 10,
+  //     background: "#fff"
+  //   });
+
+  //   for (var i = 0, len = frms.length; i < len; i++) {
+  //     context.putImageData(frms[i], 0, 0);
+  //     gif.addFrame(frms[i], {copy: true, delay: 83});
+  //   }
+
+  //   gif.on('finished', function(blob) {
+  //     window.open(URL.createObjectURL(blob));
+  //   });
+
+  //   gif.render();
+  // }
+
+  // function loopThroughImageData(imgData) {
+  //   var i, len, j, len_j, arr, total = 0;
+  //   imgData = (imgData.data || imgData);
+  //   for (i = 0, len = imgData.length; i < len; i++) {
+  //     if (!((i + 1) % 4) && imgData[i] === 0) {
+  //       imgData[i] = 1;
+  //     }
+  //     // for (j = 0, len_j = arr.length; j < len_j; j++) {
+  //     //   total += arr[j];
+  //     // }
+  //   }
+  // }
+  
+  // function saveFrm(frm) {
+  //   var data = frm.data, 
+  //       saveData = [], 
+  //       bckgrnd = [255,255,255,25],
+  //       datum;
+  //   for (var i = 0, len = data.length; i < len; i++) {
+  //     datum = data[i];
+  //     if (datum !== bckgrnd[i % 4]) saveData.push([i, datum]);
+  //   }
+  //   return saveData;
+  // }
+
+  // function saveProj() {
+  //   var proj = {width: canvas.width, height: canvas.height}, projFrms = [];
+
+  //   for (var i = 0, len = frms.length; i < len; i++) {
+  //     projFrms.push(saveFrm(frms[i]));
+  //   }
+
+  //   proj.frms = projFrms;
+  //   return JSON.stringify(proj);
+  // }
+
+  // function loadProj(jsonString) {
+  //   var proj = JSON.parse(jsonString), 
+  //       projFrms = proj.frms,
+  //       width = proj.width,
+  //       height = proj.height,
+  //       bckgrnd = [255,255,255,25],
+  //       imgData, i, j, len, len_j, frm, frm_j;
+  //   frms = [];
+  //   for (var i = 0, len = projFrms.length; i < len; i++) {
+  //     imgData = context.createImageData(width, height);
+  //     for (j = 0, len_j = width * height * 4; j < len_j; j++) {
+  //       imgData.data[j] = bckgrnd[j % 4];
+  //     }
+  //     frm = projFrms[i];
+  //     for (j = 0, len_j = frm.length; j < len_j; j++) {
+  //       frm_j = frm[j];
+  //       imgData.data[frm_j[0]] = frm_j[1];
+  //     }
+  //     frms.push(imgData);
+  //   }
+  //   currentFrm = 0;
+  //   context.putImageData(frms[currentFrm], 0, 0);
+  // }
+  </script>
+  
+ 
+</body>

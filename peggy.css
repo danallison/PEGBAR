@@ -1,0 +1,29 @@
+body {
+  font-family: 'Patrick Hand SC', cursive;
+  margin: 0;
+  padding: 0;
+}
+header {
+  display: block;
+  width: 100%;
+  text-align: center;
+  margin: 0;
+}
+h1 {
+  margin: 0;
+  padding: 0;
+  font-family: 'Patrick Hand SC', cursive;
+  font-size: 60px;
+}
+#canvas-container, #controls-container {
+  position: absolute;
+  /*top and left are set with js*/
+}
+canvas, .onion {
+  position: absolute;
+  border: solid 1px #999; 
+}
+.onion {
+  background: #fff;
+  opacity: 0.55;
+}
