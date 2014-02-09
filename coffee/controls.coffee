@@ -7,6 +7,7 @@ class PEGBAR.Controls
     @nextButton = el "next"
     @prevButton = el "prev"
     @newButton  = el "new"
+    @deleteButton  = el "delete"
     @playButton = el "play"
     @exportButton = el "export"
 
@@ -23,6 +24,11 @@ class PEGBAR.Controls
       paperStack.newFrame()
       paperStack.nextFrame()
       paperStack.reconstruct()
+
+    @deleteButton.addEventListener "click", =>
+      if confirm "are you sure?"
+        paperStack.removeFrame()
+        paperStack.reconstruct()
 
     @playButton.addEventListener "click", =>
       if paperStack.playing

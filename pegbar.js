@@ -91,6 +91,7 @@
       this.nextButton = el("next");
       this.prevButton = el("prev");
       this.newButton = el("new");
+      this.deleteButton = el("delete");
       this.playButton = el("play");
       this.exportButton = el("export");
       paperStack = PEGBAR.paperStack;
@@ -106,6 +107,12 @@
         paperStack.newFrame();
         paperStack.nextFrame();
         return paperStack.reconstruct();
+      });
+      this.deleteButton.addEventListener("click", function() {
+        if (confirm("are you sure?")) {
+          paperStack.removeFrame();
+          return paperStack.reconstruct();
+        }
       });
       this.playButton.addEventListener("click", function() {
         if (paperStack.playing) {
@@ -426,6 +433,9 @@
         atIndex = this.currentIndex;
       }
       stack.splice(atIndex, 1);
+      if (!stack.length) {
+        stack.push(new PEGBAR.DrawingCanvas);
+      }
       if (this.currentIndex === stack.length) {
         return this.currentIndex--;
       }

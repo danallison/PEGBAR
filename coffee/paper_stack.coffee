@@ -74,6 +74,7 @@ class PEGBAR.PaperStack
   removeFrame: (atIndex) ->
     atIndex = @currentIndex unless atIndex?
     stack.splice atIndex, 1
+    stack.push new PEGBAR.DrawingCanvas unless stack.length
     @currentIndex-- if @currentIndex is stack.length
 
   insertTweenFrames: ->
