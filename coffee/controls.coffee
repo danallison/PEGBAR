@@ -8,6 +8,7 @@ class PEGBAR.Controls
     @prevButton = el "prev"
     @newButton  = el "new"
     @playButton = el "play"
+    @exportButton = el "export"
 
     {paperStack} = PEGBAR
     @nextButton.addEventListener "click", ->
@@ -24,3 +25,6 @@ class PEGBAR.Controls
 
     @playButton.addEventListener "click", ->
       paperStack.play()
+
+    @exportButton.addEventListener "click", ->
+      PEGBAR.exportGif()

@@ -2,11 +2,16 @@ PEGBAR = window.PEGBAR ||= {}
 
 class PEGBAR.PaperStack
   
+  el = (id) -> document.getElementById id
   canvasContainer = null
+  currentFrameNumberDisplay = null
+  totalFramesDisplay = null
   stack = []
 
   constructor: ->
-    canvasContainer ||= document.getElementById "canvas-container"
+    canvasContainer = el "canvas-container"
+    currentFrameNumberDisplay = el "current_frame"
+    totalFramesDisplay = el "total_frames"
     @currentIndex = 0
     @newFrame()
 
@@ -14,8 +19,8 @@ class PEGBAR.PaperStack
 
   reconstruct: ->
     currentFrame = stack[@currentIndex]
-    preceedingFrames = stack.slice(0, @currentIndex)
-    proceedingFrames = stack.slice(@currentIndex + 1, stack.length).reverse()
+    preceedingFrames = stack.slice(Math.max(0, @currentIndex - 5), @currentIndex)
+    proceedingFrames = stack.slice(@currentIndex + 1, Math.min(@currentIndex + 6, stack.length)).reverse()
     
     layerDepth = Math.max(preceedingFrames.length, proceedingFrames.length)
     if proceedingFrames.length < layerDepth
@@ -32,13 +37,19 @@ class PEGBAR.PaperStack
       if preFrame
         preFrame.style.display = "block"
         canvasContainer.appendChild preFrame
+        canvasContainer.appendChild @newOnionLayer()
       if proFrame 
         proFrame.style.display = "block"
         canvasContainer.appendChild proFrame
+        canvasContainer.appendChild @newOnionLayer()
 
+    if @guideFrame
+      canvasContainer.appendChild @guideFrame 
       canvasContainer.appendChild @newOnionLayer()
 
     canvasContainer.appendChild currentFrame.canvas
+    currentFrameNumberDisplay.textContent = @currentIndex + 1
+    totalFramesDisplay.textContent = stack.length
 
 
   newOnionLayer: ->
@@ -48,15 +59,27 @@ class PEGBAR.PaperStack
     onion.style.width = "#{PEGBAR.CANVAS_WIDTH}px"
     return onion
 
+  prevFrame: ->
+    @currentIndex = (@currentIndex - 1 + stack.length) % stack.length
+
   nextFrame: ->
     @currentIndex = (@currentIndex + 1) % stack.length
 
-  newFrame: ->
-    stack.push new PEGBAR.DrawingCanvas
-    @currentIndex = stack.length - 1
+  newFrame: (atIndex) ->
+    atIndex = @currentIndex + 1 unless atIndex?
+    stack.splice atIndex, 0, new PEGBAR.DrawingCanvas
 
-  prevFrame: ->
-    @currentIndex = (@currentIndex - 1 + stack.length) % stack.length
+  removeFrame: (atIndex) ->
+    atIndex = @currentIndex unless atIndex?
+    stack.splice atIndex, 1
+    @currentIndex-- if @currentIndex is stack.length
+
+  insertTweenFrames: ->
+    newStack = []
+    newStack.push stack.shift(), new PEGBAR.DrawingCanvas while stack.length
+    newStack.pop()
+    stack = newStack
+    @currentIndex = stack.length - 1
 
   play: ->
     return @stop() if @playing

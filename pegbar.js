@@ -91,6 +91,7 @@
       this.prevButton = el("prev");
       this.newButton = el("new");
       this.playButton = el("play");
+      this.exportButton = el("export");
       paperStack = PEGBAR.paperStack;
       this.nextButton.addEventListener("click", function() {
         paperStack.nextFrame();
@@ -106,6 +107,9 @@
       });
       this.playButton.addEventListener("click", function() {
         return paperStack.play();
+      });
+      this.exportButton.addEventListener("click", function() {
+        return PEGBAR.exportGif();
       });
     }
 
@@ -314,14 +318,24 @@
   PEGBAR = window.PEGBAR || (window.PEGBAR = {});
 
   PEGBAR.PaperStack = (function() {
-    var canvasContainer, stack;
+    var canvasContainer, currentFrameNumberDisplay, el, stack, totalFramesDisplay;
+
+    el = function(id) {
+      return document.getElementById(id);
+    };
 
     canvasContainer = null;
+
+    currentFrameNumberDisplay = null;
+
+    totalFramesDisplay = null;
 
     stack = [];
 
     function PaperStack() {
-      canvasContainer || (canvasContainer = document.getElementById("canvas-container"));
+      canvasContainer = el("canvas-container");
+      currentFrameNumberDisplay = el("current_frame");
+      totalFramesDisplay = el("total_frames");
       this.currentIndex = 0;
       this.newFrame();
     }
@@ -333,8 +347,8 @@
     PaperStack.prototype.reconstruct = function() {
       var currentFrame, layerDepth, layerIndex, preFrame, preceedingFrames, proFrame, proceedingFrames, _ref, _ref1;
       currentFrame = stack[this.currentIndex];
-      preceedingFrames = stack.slice(0, this.currentIndex);
-      proceedingFrames = stack.slice(this.currentIndex + 1, stack.length).reverse();
+      preceedingFrames = stack.slice(Math.max(0, this.currentIndex - 5), this.currentIndex);
+      proceedingFrames = stack.slice(this.currentIndex + 1, Math.min(this.currentIndex + 6, stack.length)).reverse();
       layerDepth = Math.max(preceedingFrames.length, proceedingFrames.length);
       if (proceedingFrames.length < layerDepth) {
         while (proceedingFrames.length !== layerDepth) {
@@ -353,14 +367,21 @@
         if (preFrame) {
           preFrame.style.display = "block";
           canvasContainer.appendChild(preFrame);
+          canvasContainer.appendChild(this.newOnionLayer());
         }
         if (proFrame) {
           proFrame.style.display = "block";
           canvasContainer.appendChild(proFrame);
+          canvasContainer.appendChild(this.newOnionLayer());
         }
+      }
+      if (this.guideFrame) {
+        canvasContainer.appendChild(this.guideFrame);
         canvasContainer.appendChild(this.newOnionLayer());
       }
-      return canvasContainer.appendChild(currentFrame.canvas);
+      canvasContainer.appendChild(currentFrame.canvas);
+      currentFrameNumberDisplay.textContent = this.currentIndex + 1;
+      return totalFramesDisplay.textContent = stack.length;
     };
 
     PaperStack.prototype.newOnionLayer = function() {
@@ -372,17 +393,40 @@
       return onion;
     };
 
+    PaperStack.prototype.prevFrame = function() {
+      return this.currentIndex = (this.currentIndex - 1 + stack.length) % stack.length;
+    };
+
     PaperStack.prototype.nextFrame = function() {
       return this.currentIndex = (this.currentIndex + 1) % stack.length;
     };
 
-    PaperStack.prototype.newFrame = function() {
-      stack.push(new PEGBAR.DrawingCanvas);
-      return this.currentIndex = stack.length - 1;
+    PaperStack.prototype.newFrame = function(atIndex) {
+      if (atIndex == null) {
+        atIndex = this.currentIndex + 1;
+      }
+      return stack.splice(atIndex, 0, new PEGBAR.DrawingCanvas);
     };
 
-    PaperStack.prototype.prevFrame = function() {
-      return this.currentIndex = (this.currentIndex - 1 + stack.length) % stack.length;
+    PaperStack.prototype.removeFrame = function(atIndex) {
+      if (atIndex == null) {
+        atIndex = this.currentIndex;
+      }
+      stack.splice(atIndex, 1);
+      if (this.currentIndex === stack.length) {
+        return this.currentIndex--;
+      }
+    };
+
+    PaperStack.prototype.insertTweenFrames = function() {
+      var newStack;
+      newStack = [];
+      while (stack.length) {
+        newStack.push(stack.shift(), new PEGBAR.DrawingCanvas);
+      }
+      newStack.pop();
+      stack = newStack;
+      return this.currentIndex = stack.length - 1;
     };
 
     PaperStack.prototype.play = function() {
