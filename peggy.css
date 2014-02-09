@@ -19,6 +19,9 @@ h1 {
   position: absolute;
   /*top and left are set with js*/
 }
+#canvas-container {
+  cursor: crosshair;
+}
 canvas, .onion {
   position: absolute;
   border: solid 1px #999; 
@@ -26,4 +29,7 @@ canvas, .onion {
 .onion {
   background: #fff;
   opacity: 0.55;
+}
+.clickable {
+  cursor: pointer;
 }

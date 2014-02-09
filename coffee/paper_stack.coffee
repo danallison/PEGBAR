@@ -12,6 +12,8 @@ class PEGBAR.PaperStack
     canvasContainer = el "canvas-container"
     currentFrameNumberDisplay = el "current_frame"
     totalFramesDisplay = el "total_frames"
+    @onionCountBehind = 3
+    @onionCountAhead = 3
     @currentIndex = 0
     @newFrame()
 
@@ -19,8 +21,8 @@ class PEGBAR.PaperStack
 
   reconstruct: ->
     currentFrame = stack[@currentIndex]
-    preceedingFrames = stack.slice(Math.max(0, @currentIndex - 5), @currentIndex)
-    proceedingFrames = stack.slice(@currentIndex + 1, Math.min(@currentIndex + 6, stack.length)).reverse()
+    preceedingFrames = stack.slice(Math.max(0, @currentIndex - @onionCountBehind), @currentIndex)
+    proceedingFrames = stack.slice(@currentIndex + 1, Math.min(@currentIndex + 1 + @onionCountAhead, stack.length)).reverse()
     
     layerDepth = Math.max(preceedingFrames.length, proceedingFrames.length)
     if proceedingFrames.length < layerDepth
@@ -37,11 +39,11 @@ class PEGBAR.PaperStack
       if preFrame
         preFrame.style.display = "block"
         canvasContainer.appendChild preFrame
-        canvasContainer.appendChild @newOnionLayer()
       if proFrame 
         proFrame.style.display = "block"
         canvasContainer.appendChild proFrame
-        canvasContainer.appendChild @newOnionLayer()
+      
+      canvasContainer.appendChild @newOnionLayer() if preFrame or proFrame
 
     if @guideFrame
       canvasContainer.appendChild @guideFrame 

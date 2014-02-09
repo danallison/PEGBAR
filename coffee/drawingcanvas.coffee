@@ -22,6 +22,7 @@ class PEGBAR.DrawingCanvas
     ctx.beginPath()
     ctx.moveTo evnt.layerX, evnt.layerY
     @isDrawing = true
+    canvasContainer.style.cursor = "none";
 
   mousemove: (evnt) =>
     if @isDrawing
@@ -33,6 +34,7 @@ class PEGBAR.DrawingCanvas
     if @isDrawing
       @mousemove evnt 
       @isDrawing = false
+      canvasContainer.style.cursor = "crosshair";
 
   getImageData: ->
     {width, height} = @canvas

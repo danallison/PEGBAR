@@ -21,10 +21,16 @@ class PEGBAR.Controls
 
     @newButton.addEventListener "click", ->
       paperStack.newFrame()
+      paperStack.nextFrame()
       paperStack.reconstruct()
 
-    @playButton.addEventListener "click", ->
-      paperStack.play()
+    @playButton.addEventListener "click", =>
+      if paperStack.playing
+        paperStack.stop()
+        @playButton.textContent = "play"
+      else
+        paperStack.play()
+        @playButton.textContent = "stop"
 
     @exportButton.addEventListener "click", ->
       PEGBAR.exportGif()

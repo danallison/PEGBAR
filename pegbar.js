@@ -86,7 +86,8 @@
     };
 
     function Controls() {
-      var paperStack;
+      var paperStack,
+        _this = this;
       this.nextButton = el("next");
       this.prevButton = el("prev");
       this.newButton = el("new");
@@ -103,10 +104,17 @@
       });
       this.newButton.addEventListener("click", function() {
         paperStack.newFrame();
+        paperStack.nextFrame();
         return paperStack.reconstruct();
       });
       this.playButton.addEventListener("click", function() {
-        return paperStack.play();
+        if (paperStack.playing) {
+          paperStack.stop();
+          return _this.playButton.textContent = "play";
+        } else {
+          paperStack.play();
+          return _this.playButton.textContent = "stop";
+        }
       });
       this.exportButton.addEventListener("click", function() {
         return PEGBAR.exportGif();
@@ -176,7 +184,8 @@
       ctx = this.ctx;
       ctx.beginPath();
       ctx.moveTo(evnt.layerX, evnt.layerY);
-      return this.isDrawing = true;
+      this.isDrawing = true;
+      return canvasContainer.style.cursor = "none";
     };
 
     DrawingCanvas.prototype.mousemove = function(evnt) {
@@ -191,7 +200,8 @@
     DrawingCanvas.prototype.mouseup = function(evnt) {
       if (this.isDrawing) {
         this.mousemove(evnt);
-        return this.isDrawing = false;
+        this.isDrawing = false;
+        return canvasContainer.style.cursor = "crosshair";
       }
     };
 
@@ -336,6 +346,8 @@
       canvasContainer = el("canvas-container");
       currentFrameNumberDisplay = el("current_frame");
       totalFramesDisplay = el("total_frames");
+      this.onionCountBehind = 3;
+      this.onionCountAhead = 3;
       this.currentIndex = 0;
       this.newFrame();
     }
@@ -347,8 +359,8 @@
     PaperStack.prototype.reconstruct = function() {
       var currentFrame, layerDepth, layerIndex, preFrame, preceedingFrames, proFrame, proceedingFrames, _ref, _ref1;
       currentFrame = stack[this.currentIndex];
-      preceedingFrames = stack.slice(Math.max(0, this.currentIndex - 5), this.currentIndex);
-      proceedingFrames = stack.slice(this.currentIndex + 1, Math.min(this.currentIndex + 6, stack.length)).reverse();
+      preceedingFrames = stack.slice(Math.max(0, this.currentIndex - this.onionCountBehind), this.currentIndex);
+      proceedingFrames = stack.slice(this.currentIndex + 1, Math.min(this.currentIndex + 1 + this.onionCountAhead, stack.length)).reverse();
       layerDepth = Math.max(preceedingFrames.length, proceedingFrames.length);
       if (proceedingFrames.length < layerDepth) {
         while (proceedingFrames.length !== layerDepth) {
@@ -367,11 +379,12 @@
         if (preFrame) {
           preFrame.style.display = "block";
           canvasContainer.appendChild(preFrame);
-          canvasContainer.appendChild(this.newOnionLayer());
         }
         if (proFrame) {
           proFrame.style.display = "block";
           canvasContainer.appendChild(proFrame);
+        }
+        if (preFrame || proFrame) {
           canvasContainer.appendChild(this.newOnionLayer());
         }
       }
