@@ -55,26 +55,36 @@
     return this.drawingCanvas.putImageData();
   };
 
-  PEGBAR.exportGif = function() {
-    var frm, gif, stack, _i, _len;
-    gif = new GIF({
-      workers: 2,
-      quality: 10,
-      background: "#fff"
-    });
-    stack = this.paperStack.getStack();
-    for (_i = 0, _len = stack.length; _i < _len; _i++) {
-      frm = stack[_i];
-      gif.addFrame(frm.getImageData(), {
-        copy: true,
-        delay: 83
+  (function() {
+    var _exportingGif;
+    _exportingGif = false;
+    return PEGBAR.exportGif = function() {
+      var frm, gif, stack, _i, _len,
+        _this = this;
+      if (_exportingGif) {
+        return;
+      }
+      _exportingGif = true;
+      gif = new GIF({
+        workers: 2,
+        quality: 10,
+        background: "#fff"
       });
-    }
-    gif.on('finished', function(blob) {
-      return window.open(URL.createObjectURL(blob));
-    });
-    return gif.render();
-  };
+      stack = this.paperStack.getStack();
+      for (_i = 0, _len = stack.length; _i < _len; _i++) {
+        frm = stack[_i];
+        gif.addFrame(frm.getImageData(), {
+          copy: true,
+          delay: frm.duration
+        });
+      }
+      gif.on('finished', function(blob) {
+        _exportingGif = false;
+        return window.open(URL.createObjectURL(blob));
+      });
+      return gif.render();
+    };
+  })();
 
   PEGBAR = window.PEGBAR || (window.PEGBAR = {});
 
@@ -115,12 +125,10 @@
         }
       });
       this.playButton.addEventListener("click", function() {
-        if (paperStack.playing) {
-          paperStack.stop();
-          return _this.playButton.textContent = "play";
-        } else {
-          paperStack.play();
+        if (paperStack.play()) {
           return _this.playButton.textContent = "stop";
+        } else {
+          return _this.playButton.textContent = "play";
         }
       });
       this.exportButton.addEventListener("click", function() {
@@ -166,6 +174,8 @@
 
     canvasContainer = null;
 
+    DrawingCanvas.prototype.duration = 83;
+
     function DrawingCanvas() {
       this.mouseup = __bind(this.mouseup, this);
       this.mousemove = __bind(this.mousemove, this);
@@ -191,8 +201,7 @@
       ctx = this.ctx;
       ctx.beginPath();
       ctx.moveTo(evnt.layerX, evnt.layerY);
-      this.isDrawing = true;
-      return canvasContainer.style.cursor = "none";
+      return this.isDrawing = true;
     };
 
     DrawingCanvas.prototype.mousemove = function(evnt) {
@@ -207,8 +216,7 @@
     DrawingCanvas.prototype.mouseup = function(evnt) {
       if (this.isDrawing) {
         this.mousemove(evnt);
-        this.isDrawing = false;
-        return canvasContainer.style.cursor = "crosshair";
+        return this.isDrawing = false;
       }
     };
 
@@ -332,76 +340,181 @@
 
   })();
 
+  _.isInteger = function(n) {
+    return n === n | 0;
+  };
+
+  _.isPositiveNumber = function(n) {
+    return _.isNumber(n) && n > 0;
+  };
+
+  _.isPositiveInteger = function(n) {
+    return _.isPositiveNumber(n) && _.isInteger(n);
+  };
+
+  _.isNonNegativeNumber = function(n) {
+    return _.isNumber(n) && n >= 0;
+  };
+
+  _.isNonNegativeInteger = function(n) {
+    return _.isNonNegativeNumber(n) && _.isInteger(n);
+  };
+
   PEGBAR = window.PEGBAR || (window.PEGBAR = {});
 
   PEGBAR.PaperStack = (function() {
-    var canvasContainer, currentFrameNumberDisplay, el, stack, totalFramesDisplay;
+    var el, __stack__, _canvasContainer, _currentFrameNumberDisplay, _onionCountAhead, _onionCountBehind, _playing, _showGuideFrame, _showOnions, _timeout, _totalFramesDisplay;
 
     el = function(id) {
       return document.getElementById(id);
     };
 
-    canvasContainer = null;
+    _canvasContainer = null;
 
-    currentFrameNumberDisplay = null;
+    _currentFrameNumberDisplay = null;
 
-    totalFramesDisplay = null;
+    _totalFramesDisplay = null;
 
-    stack = [];
+    _showOnions = true;
+
+    _showGuideFrame = true;
+
+    _onionCountBehind = 2;
+
+    _onionCountAhead = 2;
+
+    _playing = false;
+
+    _timeout = null;
+
+    __stack__ = [];
+
+    PaperStack.prototype.currentIndex = 0;
 
     function PaperStack() {
-      canvasContainer = el("canvas-container");
-      currentFrameNumberDisplay = el("current_frame");
-      totalFramesDisplay = el("total_frames");
-      this.onionCountBehind = 3;
-      this.onionCountAhead = 3;
-      this.currentIndex = 0;
+      _canvasContainer = el("canvas-container");
+      _currentFrameNumberDisplay = el("current_frame");
+      _totalFramesDisplay = el("total_frames");
       this.newFrame();
     }
 
     PaperStack.prototype.getStack = function() {
-      return stack.slice();
+      return __stack__.slice();
+    };
+
+    PaperStack.prototype.getCurrentFrame = function() {
+      return __stack__[this.currentIndex];
+    };
+
+    PaperStack.prototype.setGuideFrame = function(frameIndex) {
+      if (frameIndex == null) {
+        frameIndex = this.currentIndex;
+      }
+      if (_.isNonNegativeInteger(frameIndex)) {
+        return this.guideFrame = __stack__[frameIndex].canvas;
+      } else if (_.isElement(frameIndex)) {
+        return this.guideFrame = frameIndex;
+      } else {
+        throw "expecting a positive integer or DOM element, instead got " + frameIndex;
+      }
+    };
+
+    PaperStack.prototype.setFrameDuration = function(newDuration, index) {
+      if (index == null) {
+        index = this.currentIndex;
+      }
+      if (!_.isPositiveNumber(newDuration)) {
+        throw "new duration must be a positive number";
+      }
+      if (!_.isNonNegativeInteger(index)) {
+        throw "index must be a non-negative integer";
+      }
+      return __stack__[index].duration = newDuration;
+    };
+
+    PaperStack.prototype.setOnionCount = function(behindCount, aheadCount) {
+      if (!_.isNonNegativeInteger(behindCount)) {
+        throw "must provide a non-negative integer";
+      }
+      behindCount = Math.min(behindCount, 5);
+      aheadCount = _.isNonNegativeInteger(aheadCount) ? Math.min(aheadCount, 5) : behindCount;
+      _onionCountAhead = aheadCount;
+      _onionCountBehind = behindCount;
+      return this.reconstruct();
+    };
+
+    PaperStack.prototype.hideOnions = function() {
+      _showOnions = false;
+      return this.reconstruct();
+    };
+
+    PaperStack.prototype.showOnions = function() {
+      _showOnions = true;
+      return this.reconstruct();
+    };
+
+    PaperStack.prototype.toggleOnions = function() {
+      _showOnions = !_showOnions;
+      return this.reconstruct();
+    };
+
+    PaperStack.prototype.hideGuideFrame = function() {
+      _showGuideFrame = false;
+      return this.reconstruct();
+    };
+
+    PaperStack.prototype.showGuideFrame = function() {
+      _showGuideFrame = true;
+      return this.reconstruct();
+    };
+
+    PaperStack.prototype.toggleGuideFrame = function() {
+      _showGuideFrame = !_showGuideFrame;
+      return this.reconstruct();
     };
 
     PaperStack.prototype.reconstruct = function() {
       var currentFrame, layerDepth, layerIndex, preFrame, preceedingFrames, proFrame, proceedingFrames, _ref, _ref1;
-      currentFrame = stack[this.currentIndex];
-      preceedingFrames = stack.slice(Math.max(0, this.currentIndex - this.onionCountBehind), this.currentIndex);
-      proceedingFrames = stack.slice(this.currentIndex + 1, Math.min(this.currentIndex + 1 + this.onionCountAhead, stack.length)).reverse();
-      layerDepth = Math.max(preceedingFrames.length, proceedingFrames.length);
-      if (proceedingFrames.length < layerDepth) {
-        while (proceedingFrames.length !== layerDepth) {
-          proceedingFrames.unshift(null);
+      currentFrame = __stack__[this.currentIndex];
+      _canvasContainer.innerHTML = "";
+      if (_showOnions && _onionCountBehind + _onionCountAhead > 0) {
+        preceedingFrames = __stack__.slice(Math.max(0, this.currentIndex - _onionCountBehind), this.currentIndex);
+        proceedingFrames = __stack__.slice(this.currentIndex + 1, Math.min(this.currentIndex + 1 + _onionCountAhead, __stack__.length)).reverse();
+        layerDepth = Math.max(preceedingFrames.length, proceedingFrames.length);
+        if (proceedingFrames.length < layerDepth) {
+          while (proceedingFrames.length !== layerDepth) {
+            proceedingFrames.unshift(null);
+          }
+        } else if (preceedingFrames.length < layerDepth) {
+          while (preceedingFrames.length !== layerDepth) {
+            preceedingFrames.unshift(null);
+          }
         }
-      } else if (preceedingFrames.length < layerDepth) {
-        while (preceedingFrames.length !== layerDepth) {
-          preceedingFrames.unshift(null);
+        layerIndex = -1;
+        while (layerIndex++ < layerDepth) {
+          preFrame = (_ref = preceedingFrames[layerIndex]) != null ? _ref.canvas : void 0;
+          proFrame = (_ref1 = proceedingFrames[layerIndex]) != null ? _ref1.canvas : void 0;
+          if (preFrame) {
+            preFrame.style.display = "block";
+            _canvasContainer.appendChild(preFrame);
+          }
+          if (proFrame) {
+            proFrame.style.display = "block";
+            _canvasContainer.appendChild(proFrame);
+          }
+          if (preFrame || proFrame) {
+            _canvasContainer.appendChild(this.newOnionLayer());
+          }
         }
       }
-      canvasContainer.innerHTML = "";
-      layerIndex = -1;
-      while (layerIndex++ < layerDepth) {
-        preFrame = (_ref = preceedingFrames[layerIndex]) != null ? _ref.canvas : void 0;
-        proFrame = (_ref1 = proceedingFrames[layerIndex]) != null ? _ref1.canvas : void 0;
-        if (preFrame) {
-          preFrame.style.display = "block";
-          canvasContainer.appendChild(preFrame);
-        }
-        if (proFrame) {
-          proFrame.style.display = "block";
-          canvasContainer.appendChild(proFrame);
-        }
-        if (preFrame || proFrame) {
-          canvasContainer.appendChild(this.newOnionLayer());
-        }
+      if (_showGuideFrame && this.guideFrame) {
+        _canvasContainer.appendChild(this.guideFrame);
+        _canvasContainer.appendChild(this.newOnionLayer());
       }
-      if (this.guideFrame) {
-        canvasContainer.appendChild(this.guideFrame);
-        canvasContainer.appendChild(this.newOnionLayer());
-      }
-      canvasContainer.appendChild(currentFrame.canvas);
-      currentFrameNumberDisplay.textContent = this.currentIndex + 1;
-      return totalFramesDisplay.textContent = stack.length;
+      currentFrame.canvas.style.display = "block";
+      _canvasContainer.appendChild(currentFrame.canvas);
+      _currentFrameNumberDisplay.textContent = this.currentIndex + 1;
+      return _totalFramesDisplay.textContent = __stack__.length;
     };
 
     PaperStack.prototype.newOnionLayer = function() {
@@ -414,29 +527,29 @@
     };
 
     PaperStack.prototype.prevFrame = function() {
-      return this.currentIndex = (this.currentIndex - 1 + stack.length) % stack.length;
+      return this.currentIndex = (this.currentIndex - 1 + __stack__.length) % __stack__.length;
     };
 
     PaperStack.prototype.nextFrame = function() {
-      return this.currentIndex = (this.currentIndex + 1) % stack.length;
+      return this.currentIndex = (this.currentIndex + 1) % __stack__.length;
     };
 
     PaperStack.prototype.newFrame = function(atIndex) {
-      if (atIndex == null) {
+      if (!_.isNonNegativeInteger(atIndex)) {
         atIndex = this.currentIndex + 1;
       }
-      return stack.splice(atIndex, 0, new PEGBAR.DrawingCanvas);
+      return __stack__.splice(atIndex, 0, new PEGBAR.DrawingCanvas);
     };
 
     PaperStack.prototype.removeFrame = function(atIndex) {
-      if (atIndex == null) {
+      if (!_.isNonNegativeInteger(atIndex)) {
         atIndex = this.currentIndex;
       }
-      stack.splice(atIndex, 1);
-      if (!stack.length) {
-        stack.push(new PEGBAR.DrawingCanvas);
+      __stack__.splice(atIndex, 1);
+      if (!__stack__.length) {
+        __stack__.push(new PEGBAR.DrawingCanvas);
       }
-      if (this.currentIndex === stack.length) {
+      if (this.currentIndex === __stack__.length) {
         return this.currentIndex--;
       }
     };
@@ -444,39 +557,42 @@
     PaperStack.prototype.insertTweenFrames = function() {
       var newStack;
       newStack = [];
-      while (stack.length) {
-        newStack.push(stack.shift(), new PEGBAR.DrawingCanvas);
+      while (__stack__.length) {
+        newStack.push(__stack__.shift(), new PEGBAR.DrawingCanvas);
       }
       newStack.pop();
-      stack = newStack;
-      return this.currentIndex = stack.length - 1;
+      __stack__ = newStack;
+      return this.currentIndex = __stack__.length - 1;
     };
 
     PaperStack.prototype.play = function() {
       var frame, tick, _i, _len,
         _this = this;
-      if (this.playing) {
+      if (_playing || __stack__.length === 1) {
         return this.stop();
       }
-      canvasContainer.innerHTML = "";
-      for (_i = 0, _len = stack.length; _i < _len; _i++) {
-        frame = stack[_i];
+      _canvasContainer.innerHTML = "";
+      for (_i = 0, _len = __stack__.length; _i < _len; _i++) {
+        frame = __stack__[_i];
         frame.canvas.style.display = "none";
-        canvasContainer.appendChild(frame.canvas);
+        _canvasContainer.appendChild(frame.canvas);
       }
       tick = function() {
-        stack[_this.currentIndex].canvas.style.display = "none";
-        return stack[_this.nextFrame()].canvas.style.display = "block";
+        var nextFrame;
+        __stack__[_this.currentIndex].canvas.style.display = "none";
+        nextFrame = __stack__[_this.nextFrame()];
+        nextFrame.canvas.style.display = "block";
+        _currentFrameNumberDisplay.textContent = _this.currentIndex + 1;
+        return _timeout = _.delay(tick, nextFrame.duration);
       };
       tick();
-      this.interval = setInterval(tick, 1000 / 12);
-      return this.playing = true;
+      return _playing = true;
     };
 
     PaperStack.prototype.stop = function() {
-      clearInterval(this.interval);
-      this.playing = false;
-      return this.reconstruct();
+      clearTimeout(_timeout);
+      this.reconstruct();
+      return _playing = false;
     };
 
     return PaperStack;

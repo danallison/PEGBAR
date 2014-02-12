@@ -36,19 +36,25 @@ PEGBAR.open = (saveData) ->
   @frms.loadFromSaveData frms 
   @drawingCanvas.putImageData()
 
-PEGBAR.exportGif = ->
-  gif = new GIF {
-    workers: 2
-    quality: 10
-    background: "#fff"
-  }
+do ->
+  _exportingGif = false
 
-  stack = @paperStack.getStack()
-  for frm in stack 
-    gif.addFrame frm.getImageData(), {copy: true, delay: 83} 
+  PEGBAR.exportGif = ->
+    return if _exportingGif
+    _exportingGif = true
+    gif = new GIF {
+      workers: 2
+      quality: 10
+      background: "#fff"
+    }
 
-  gif.on 'finished', (blob) ->
-    window.open(URL.createObjectURL(blob))
+    stack = @paperStack.getStack()
+    for frm in stack 
+      gif.addFrame frm.getImageData(), {copy: true, delay: frm.duration} 
 
-  gif.render();
+    gif.on 'finished', (blob) =>
+      _exportingGif = false
+      window.open(URL.createObjectURL(blob))
+
+    gif.render();
 

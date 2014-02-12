@@ -2,6 +2,9 @@ PEGBAR = window.PEGBAR ||= {}
 
 class PEGBAR.DrawingCanvas
   canvasContainer = null
+
+  duration: 83
+
   constructor: ->
     canvasContainer ||= document.getElementById "canvas-container"
     canvas = @canvas = document.createElement "canvas"
@@ -22,7 +25,7 @@ class PEGBAR.DrawingCanvas
     ctx.beginPath()
     ctx.moveTo evnt.layerX, evnt.layerY
     @isDrawing = true
-    canvasContainer.style.cursor = "none";
+    # canvasContainer.style.cursor = "none"
 
   mousemove: (evnt) =>
     if @isDrawing
@@ -34,7 +37,7 @@ class PEGBAR.DrawingCanvas
     if @isDrawing
       @mousemove evnt 
       @isDrawing = false
-      canvasContainer.style.cursor = "crosshair";
+      # canvasContainer.style.cursor = "crosshair"
 
   getImageData: ->
     {width, height} = @canvas

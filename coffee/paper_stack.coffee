@@ -3,55 +3,110 @@ PEGBAR = window.PEGBAR ||= {}
 class PEGBAR.PaperStack
   
   el = (id) -> document.getElementById id
-  canvasContainer = null
-  currentFrameNumberDisplay = null
-  totalFramesDisplay = null
-  stack = []
+  _canvasContainer = null
+  _currentFrameNumberDisplay = null
+  _totalFramesDisplay = null
+  _showOnions = true
+  _showGuideFrame = true
+  _onionCountBehind = 2
+  _onionCountAhead = 2
+  _playing = false
+  _timeout = null
+  
+  __stack__ = []
+
+  currentIndex: 0
 
   constructor: ->
-    canvasContainer = el "canvas-container"
-    currentFrameNumberDisplay = el "current_frame"
-    totalFramesDisplay = el "total_frames"
-    @onionCountBehind = 3
-    @onionCountAhead = 3
-    @currentIndex = 0
+    _canvasContainer = el "canvas-container"
+    _currentFrameNumberDisplay = el "current_frame"
+    _totalFramesDisplay = el "total_frames"
     @newFrame()
 
-  getStack: -> stack.slice()
+  getStack: -> __stack__.slice()
+
+  getCurrentFrame: -> __stack__[@currentIndex]
+
+  setGuideFrame: (frameIndex = @currentIndex) ->
+    if _.isNonNegativeInteger frameIndex
+      @guideFrame = __stack__[frameIndex].canvas 
+    else if _.isElement frameIndex
+      @guideFrame = frameIndex
+    else
+      throw "expecting a positive integer or DOM element, instead got #{frameIndex}"
+
+  setFrameDuration: (newDuration, index = @currentIndex) ->
+    throw "new duration must be a positive number" unless _.isPositiveNumber newDuration
+    throw "index must be a non-negative integer" unless _.isNonNegativeInteger index
+    __stack__[index].duration = newDuration
+
+  setOnionCount: (behindCount, aheadCount) ->
+    throw "must provide a non-negative integer" unless _.isNonNegativeInteger(behindCount)
+    behindCount = Math.min behindCount, 5
+    aheadCount = if _.isNonNegativeInteger(aheadCount) then Math.min(aheadCount, 5) else behindCount
+    _onionCountAhead = aheadCount
+    _onionCountBehind = behindCount
+    @reconstruct()
+
+  hideOnions: ->
+    _showOnions = false
+    @reconstruct()
+
+  showOnions: ->
+    _showOnions = true
+    @reconstruct()
+
+  toggleOnions: ->
+    _showOnions = not _showOnions
+    @reconstruct()
+
+  hideGuideFrame: ->
+    _showGuideFrame = false
+    @reconstruct()
+
+  showGuideFrame: ->
+    _showGuideFrame = true
+    @reconstruct()
+
+  toggleGuideFrame: ->
+    _showGuideFrame = not _showGuideFrame
+    @reconstruct()
 
   reconstruct: ->
-    currentFrame = stack[@currentIndex]
-    preceedingFrames = stack.slice(Math.max(0, @currentIndex - @onionCountBehind), @currentIndex)
-    proceedingFrames = stack.slice(@currentIndex + 1, Math.min(@currentIndex + 1 + @onionCountAhead, stack.length)).reverse()
-    
-    layerDepth = Math.max(preceedingFrames.length, proceedingFrames.length)
-    if proceedingFrames.length < layerDepth
-      proceedingFrames.unshift(null) until proceedingFrames.length is layerDepth
-    else if preceedingFrames.length < layerDepth
-      preceedingFrames.unshift(null) until preceedingFrames.length is layerDepth
-    
-    canvasContainer.innerHTML = ""
-    layerIndex = -1
-    while layerIndex++ < layerDepth
-      preFrame = preceedingFrames[layerIndex]?.canvas
-      proFrame = proceedingFrames[layerIndex]?.canvas
+    currentFrame = __stack__[@currentIndex]
+    _canvasContainer.innerHTML = ""
+    if _showOnions and _onionCountBehind + _onionCountAhead > 0
+      preceedingFrames = __stack__.slice(Math.max(0, @currentIndex - _onionCountBehind), @currentIndex)
+      proceedingFrames = __stack__.slice(@currentIndex + 1, Math.min(@currentIndex + 1 + _onionCountAhead, __stack__.length)).reverse()
       
-      if preFrame
-        preFrame.style.display = "block"
-        canvasContainer.appendChild preFrame
-      if proFrame 
-        proFrame.style.display = "block"
-        canvasContainer.appendChild proFrame
+      layerDepth = Math.max(preceedingFrames.length, proceedingFrames.length)
+      if proceedingFrames.length < layerDepth
+        proceedingFrames.unshift(null) until proceedingFrames.length is layerDepth
+      else if preceedingFrames.length < layerDepth
+        preceedingFrames.unshift(null) until preceedingFrames.length is layerDepth
       
-      canvasContainer.appendChild @newOnionLayer() if preFrame or proFrame
+      layerIndex = -1
+      while layerIndex++ < layerDepth
+        preFrame = preceedingFrames[layerIndex]?.canvas
+        proFrame = proceedingFrames[layerIndex]?.canvas
+        
+        if preFrame
+          preFrame.style.display = "block"
+          _canvasContainer.appendChild preFrame
+        if proFrame 
+          proFrame.style.display = "block"
+          _canvasContainer.appendChild proFrame
+        
+        _canvasContainer.appendChild @newOnionLayer() if preFrame or proFrame
 
-    if @guideFrame
-      canvasContainer.appendChild @guideFrame 
-      canvasContainer.appendChild @newOnionLayer()
+    if _showGuideFrame and @guideFrame
+      _canvasContainer.appendChild @guideFrame 
+      _canvasContainer.appendChild @newOnionLayer()
 
-    canvasContainer.appendChild currentFrame.canvas
-    currentFrameNumberDisplay.textContent = @currentIndex + 1
-    totalFramesDisplay.textContent = stack.length
+    currentFrame.canvas.style.display = "block"
+    _canvasContainer.appendChild currentFrame.canvas
+    _currentFrameNumberDisplay.textContent = @currentIndex + 1
+    _totalFramesDisplay.textContent = __stack__.length
 
 
   newOnionLayer: ->
@@ -62,45 +117,47 @@ class PEGBAR.PaperStack
     return onion
 
   prevFrame: ->
-    @currentIndex = (@currentIndex - 1 + stack.length) % stack.length
+    @currentIndex = (@currentIndex - 1 + __stack__.length) % __stack__.length
 
   nextFrame: ->
-    @currentIndex = (@currentIndex + 1) % stack.length
+    @currentIndex = (@currentIndex + 1) % __stack__.length
 
   newFrame: (atIndex) ->
-    atIndex = @currentIndex + 1 unless atIndex?
-    stack.splice atIndex, 0, new PEGBAR.DrawingCanvas
+    atIndex = @currentIndex + 1 unless _.isNonNegativeInteger atIndex
+    __stack__.splice atIndex, 0, new PEGBAR.DrawingCanvas
 
   removeFrame: (atIndex) ->
-    atIndex = @currentIndex unless atIndex?
-    stack.splice atIndex, 1
-    stack.push new PEGBAR.DrawingCanvas unless stack.length
-    @currentIndex-- if @currentIndex is stack.length
+    atIndex = @currentIndex unless _.isNonNegativeInteger atIndex
+    __stack__.splice atIndex, 1
+    __stack__.push new PEGBAR.DrawingCanvas unless __stack__.length
+    @currentIndex-- if @currentIndex is __stack__.length
 
   insertTweenFrames: ->
     newStack = []
-    newStack.push stack.shift(), new PEGBAR.DrawingCanvas while stack.length
+    newStack.push __stack__.shift(), new PEGBAR.DrawingCanvas while __stack__.length
     newStack.pop()
-    stack = newStack
-    @currentIndex = stack.length - 1
+    __stack__ = newStack
+    @currentIndex = __stack__.length - 1
 
   play: ->
-    return @stop() if @playing
-    canvasContainer.innerHTML = ""
-    for frame in stack
+    return @stop() if _playing or __stack__.length is 1
+    _canvasContainer.innerHTML = ""
+    for frame in __stack__
       frame.canvas.style.display = "none"
-      canvasContainer.appendChild(frame.canvas)
+      _canvasContainer.appendChild(frame.canvas)
 
     tick = =>
-      stack[@currentIndex].canvas.style.display = "none"
-      stack[@nextFrame()].canvas.style.display = "block"
+      __stack__[@currentIndex].canvas.style.display = "none"
+      nextFrame = __stack__[@nextFrame()]
+      nextFrame.canvas.style.display = "block"
+      _currentFrameNumberDisplay.textContent = @currentIndex + 1
+      _timeout = _.delay tick, nextFrame.duration
     
     tick()
-    @interval = setInterval tick, 1000 / 12
-    @playing = true
+    return _playing = true
 
   stop: ->
-    clearInterval(@interval)
-    @playing = false
+    clearTimeout(_timeout)
     @reconstruct()
+    return _playing = false
 
