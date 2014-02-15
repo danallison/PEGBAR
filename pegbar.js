@@ -96,42 +96,49 @@
     };
 
     function Controls() {
-      var paperStack,
-        _this = this;
-      this.nextButton = el("next");
-      this.prevButton = el("prev");
-      this.newButton = el("new");
-      this.deleteButton = el("delete");
-      this.playButton = el("play");
-      this.exportButton = el("export");
+      var deleteButton, exportButton, guideButton, newButton, nextButton, paperStack, playButton, prevButton;
+      nextButton = el("next");
+      prevButton = el("prev");
+      newButton = el("new");
+      guideButton = el("guide");
+      deleteButton = el("delete");
+      playButton = el("play");
+      exportButton = el("export");
       paperStack = PEGBAR.paperStack;
-      this.nextButton.addEventListener("click", function() {
+      nextButton.addEventListener("click", function() {
         paperStack.nextFrame();
         return paperStack.reconstruct();
       });
-      this.prevButton.addEventListener("click", function() {
+      prevButton.addEventListener("click", function() {
         paperStack.prevFrame();
         return paperStack.reconstruct();
       });
-      this.newButton.addEventListener("click", function() {
+      newButton.addEventListener("click", function() {
         paperStack.newFrame();
         paperStack.nextFrame();
         return paperStack.reconstruct();
       });
-      this.deleteButton.addEventListener("click", function() {
+      guideButton.addEventListener("click", function() {
+        paperStack.setGuideFrame();
+        guideButton.textContent = "guide frame set";
+        return _.delay(function() {
+          return guideButton.textContent = "set guide frame";
+        }, 1000);
+      });
+      deleteButton.addEventListener("click", function() {
         if (confirm("are you sure?")) {
           paperStack.removeFrame();
           return paperStack.reconstruct();
         }
       });
-      this.playButton.addEventListener("click", function() {
+      playButton.addEventListener("click", function() {
         if (paperStack.play()) {
-          return _this.playButton.textContent = "stop";
+          return playButton.textContent = "stop";
         } else {
-          return _this.playButton.textContent = "play";
+          return playButton.textContent = "play";
         }
       });
-      this.exportButton.addEventListener("click", function() {
+      exportButton.addEventListener("click", function() {
         return PEGBAR.exportGif();
       });
     }
@@ -360,12 +367,28 @@
     return _.isNonNegativeNumber(n) && _.isInteger(n);
   };
 
+  _.removeAt = function(array, indexesToRemove) {
+    var index, slideBack;
+    if (typeof indexesToRemove === 'number') {
+      indexesToRemove = [].slice.call(arguments, 1).sort();
+    } else {
+      indexesToRemove = indexesToRemove.slice().sort();
+    }
+    slideBack = 0;
+    while (indexesToRemove.length) {
+      index = indexesToRemove.shift() - slideBack;
+      array.splice(index, 1);
+      slideBack++;
+    }
+    return array;
+  };
+
   PEGBAR = window.PEGBAR || (window.PEGBAR = {});
 
   PEGBAR.PaperStack = (function() {
-    var el, __stack__, _canvasContainer, _currentFrameNumberDisplay, _onionCountAhead, _onionCountBehind, _playing, _showGuideFrame, _showOnions, _timeout, _totalFramesDisplay;
+    var __stack__, _canvasContainer, _currentFrameNumberDisplay, _el, _onionCountAhead, _onionCountBehind, _playing, _showGuideFrame, _showOnions, _timeout, _totalFramesDisplay;
 
-    el = function(id) {
+    _el = function(id) {
       return document.getElementById(id);
     };
 
@@ -392,9 +415,9 @@
     PaperStack.prototype.currentIndex = 0;
 
     function PaperStack() {
-      _canvasContainer = el("canvas-container");
-      _currentFrameNumberDisplay = el("current_frame");
-      _totalFramesDisplay = el("total_frames");
+      _canvasContainer = _el("canvas-container");
+      _currentFrameNumberDisplay = _el("current_frame");
+      _totalFramesDisplay = _el("total_frames");
       this.newFrame();
     }
 

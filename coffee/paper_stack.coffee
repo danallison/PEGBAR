@@ -2,7 +2,7 @@ PEGBAR = window.PEGBAR ||= {}
 
 class PEGBAR.PaperStack
   
-  el = (id) -> document.getElementById id
+  _el = (id) -> document.getElementById id
   _canvasContainer = null
   _currentFrameNumberDisplay = null
   _totalFramesDisplay = null
@@ -18,9 +18,9 @@ class PEGBAR.PaperStack
   currentIndex: 0
 
   constructor: ->
-    _canvasContainer = el "canvas-container"
-    _currentFrameNumberDisplay = el "current_frame"
-    _totalFramesDisplay = el "total_frames"
+    _canvasContainer = _el "canvas-container"
+    _currentFrameNumberDisplay = _el "current_frame"
+    _totalFramesDisplay = _el "total_frames"
     @newFrame()
 
   getStack: -> __stack__.slice()
