@@ -15,7 +15,7 @@ h1 {
   font-family: 'Patrick Hand SC', cursive;
   font-size: 60px;
 }
-#canvas-container, #controls-container {
+#canvas-container, #timeline-container, #controls-container {
   position: absolute;
   /*top and left are set with js*/
 }

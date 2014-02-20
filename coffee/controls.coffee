@@ -10,39 +10,63 @@ class PEGBAR.Controls
     guideButton = el "guide"
     deleteButton  = el "delete"
     playButton = el "play"
-    exportButton = el "export"
+    exportGifButton = el "export_gif"
+    exportSpriteButton = el "export_sprite"
 
-    {paperStack} = PEGBAR
-    nextButton.addEventListener "click", ->
+    {paperStack, timeline} = PEGBAR
+    nextButton.addEventListener "click", (evt) ->
+      evt.preventDefault()
+      evt.stopPropagation()
       paperStack.nextFrame()
       paperStack.reconstruct()
+      timeline.reconstruct()
 
-    prevButton.addEventListener "click", ->
+    prevButton.addEventListener "click", (evt) ->
+      evt.preventDefault()
+      evt.stopPropagation()
       paperStack.prevFrame()
       paperStack.reconstruct()
+      timeline.reconstruct()
 
-    newButton.addEventListener "click", ->
+    newButton.addEventListener "click", (evt) ->
+      evt.preventDefault()
+      evt.stopPropagation()
       paperStack.newFrame()
       paperStack.nextFrame()
       paperStack.reconstruct()
+      timeline.reconstruct()
 
-    guideButton.addEventListener "click", ->
+    guideButton.addEventListener "click", (evt) ->
+      evt.preventDefault()
+      evt.stopPropagation()
       paperStack.setGuideFrame()
       guideButton.textContent = "guide frame set"
       _.delay ->
         guideButton.textContent = "set guide frame"
       , 1000
 
-    deleteButton.addEventListener "click", ->
+    deleteButton.addEventListener "click", (evt) ->
+      evt.preventDefault()
+      evt.stopPropagation()
       if confirm "are you sure?"
         paperStack.removeFrame()
         paperStack.reconstruct()
+        timeline.reconstruct()
 
-    playButton.addEventListener "click", ->
+    playButton.addEventListener "click", (evt) ->
+      evt.preventDefault()
+      evt.stopPropagation()
       if paperStack.play()
         playButton.textContent = "stop"
       else
         playButton.textContent = "play"
 
-    exportButton.addEventListener "click", ->
+    exportGifButton.addEventListener "click", (evt) ->
+      evt.preventDefault()
+      evt.stopPropagation()
       PEGBAR.exportGif()
+
+    exportSpriteButton.addEventListener "click", (evt) ->
+      evt.preventDefault()
+      evt.stopPropagation()
+      PEGBAR.exportPNGSpriteSheet()

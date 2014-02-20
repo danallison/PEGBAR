@@ -14,6 +14,7 @@
   <div id="container">
     
     <div id="canvas-container"></div>
+    <div id="timeline-container"></div>
 
     <div id="controls-container">
       <div>frame <span id="current_frame">1</span> of <span id="total_frames">1</span></div>
@@ -27,9 +28,12 @@
       <div>.</div>
       <div id="play" class="clickable">play</div>
       <div>.</div>
-      <div id="export" class="clickable">export gif</div>
+      <div id="export_gif" class="clickable">export animated gif</div>
+      <div id="export_sprite" class="clickable">export png sprite sheet</div>
     </div>
   </div>
+
+  <input type='file' accept='image/*' onchange='PEGBAR.loadImageFile(event)'><br>  
 
   <script type="text/javascript" src="gif.js"></script>
   <script type="text/javascript" src="lodash.js"></script>

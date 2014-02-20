@@ -18,14 +18,15 @@
     }
   };
 
-  PEGBAR.CANVAS_WIDTH = 400;
+  PEGBAR.CANVAS_WIDTH = +localStorage.canvas_width || 400;
 
-  PEGBAR.CANVAS_HEIGHT = 300;
+  PEGBAR.CANVAS_HEIGHT = +localStorage.canvas_height || 300;
 
   PEGBAR.init = function() {
     this.paperStack = new this.PaperStack;
+    this.timeline = new this.Timeline;
     this.controls = new this.Controls;
-    this.DomWrangler.centerCanvas();
+    this.DomWrangler.centerCanvasAndTimeline();
     return this.DomWrangler.putControlsToTheRightOfTheCanvas();
   };
 
@@ -86,6 +87,35 @@
     };
   })();
 
+  PEGBAR.exportPNGSpriteSheet = function() {
+    var frm, i, scratchCanvas, scratchCtx, stack, _i, _len;
+    scratchCanvas = document.createElement('canvas');
+    scratchCanvas.height = this.CANVAS_HEIGHT;
+    stack = this.paperStack.getStack();
+    scratchCanvas.width = this.CANVAS_WIDTH * stack.length;
+    scratchCtx = scratchCanvas.getContext('2d');
+    for (i = _i = 0, _len = stack.length; _i < _len; i = ++_i) {
+      frm = stack[i];
+      scratchCtx.putImageData(frm.getImageData(), this.CANVAS_WIDTH * i, 0);
+    }
+    return window.open(scratchCanvas.toDataURL());
+  };
+
+  PEGBAR.loadImageFile = function(event) {
+    var input, reader,
+      _this = this;
+    input = event.target;
+    reader = new FileReader;
+    reader.onload = function(event) {
+      var dataURL, img;
+      dataURL = event.target.result;
+      img = document.createElement('img');
+      img.src = dataURL;
+      return _this.paperStack.getCurrentFrame().drawImage(img);
+    };
+    return reader.readAsDataURL(input.files[0]);
+  };
+
   PEGBAR = window.PEGBAR || (window.PEGBAR = {});
 
   PEGBAR.Controls = (function() {
@@ -96,50 +126,74 @@
     };
 
     function Controls() {
-      var deleteButton, exportButton, guideButton, newButton, nextButton, paperStack, playButton, prevButton;
+      var deleteButton, exportGifButton, exportSpriteButton, guideButton, newButton, nextButton, paperStack, playButton, prevButton, timeline;
       nextButton = el("next");
       prevButton = el("prev");
       newButton = el("new");
       guideButton = el("guide");
       deleteButton = el("delete");
       playButton = el("play");
-      exportButton = el("export");
-      paperStack = PEGBAR.paperStack;
-      nextButton.addEventListener("click", function() {
+      exportGifButton = el("export_gif");
+      exportSpriteButton = el("export_sprite");
+      paperStack = PEGBAR.paperStack, timeline = PEGBAR.timeline;
+      nextButton.addEventListener("click", function(evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
         paperStack.nextFrame();
-        return paperStack.reconstruct();
+        paperStack.reconstruct();
+        return timeline.reconstruct();
       });
-      prevButton.addEventListener("click", function() {
+      prevButton.addEventListener("click", function(evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
         paperStack.prevFrame();
-        return paperStack.reconstruct();
+        paperStack.reconstruct();
+        return timeline.reconstruct();
       });
-      newButton.addEventListener("click", function() {
+      newButton.addEventListener("click", function(evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
         paperStack.newFrame();
         paperStack.nextFrame();
-        return paperStack.reconstruct();
+        paperStack.reconstruct();
+        return timeline.reconstruct();
       });
-      guideButton.addEventListener("click", function() {
+      guideButton.addEventListener("click", function(evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
         paperStack.setGuideFrame();
         guideButton.textContent = "guide frame set";
         return _.delay(function() {
           return guideButton.textContent = "set guide frame";
         }, 1000);
       });
-      deleteButton.addEventListener("click", function() {
+      deleteButton.addEventListener("click", function(evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
         if (confirm("are you sure?")) {
           paperStack.removeFrame();
-          return paperStack.reconstruct();
+          paperStack.reconstruct();
+          return timeline.reconstruct();
         }
       });
-      playButton.addEventListener("click", function() {
+      playButton.addEventListener("click", function(evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
         if (paperStack.play()) {
           return playButton.textContent = "stop";
         } else {
           return playButton.textContent = "play";
         }
       });
-      exportButton.addEventListener("click", function() {
+      exportGifButton.addEventListener("click", function(evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
         return PEGBAR.exportGif();
+      });
+      exportSpriteButton.addEventListener("click", function(evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        return PEGBAR.exportPNGSpriteSheet();
       });
     }
 
@@ -152,12 +206,14 @@
   PEGBAR.DomWrangler = (function() {
     function DomWrangler() {}
 
-    DomWrangler.centerCanvas = function() {
-      var canvasContainer, doc;
+    DomWrangler.centerCanvasAndTimeline = function() {
+      var canvasContainer, doc, timelineContainer;
       doc = window.document;
       canvasContainer = doc.getElementById("canvas-container");
+      timelineContainer = doc.getElementById("timeline-container");
       canvasContainer.style.top = "" + (window.innerHeight / 2 - PEGBAR.CANVAS_HEIGHT / 2) + "px";
-      return canvasContainer.style.left = "" + (window.innerWidth / 2 - PEGBAR.CANVAS_WIDTH / 2) + "px";
+      timelineContainer.style.left = canvasContainer.style.left = "" + (window.innerWidth / 2 - PEGBAR.CANVAS_WIDTH / 2) + "px";
+      return timelineContainer.style.top = "" + (window.innerHeight / 2 + PEGBAR.CANVAS_HEIGHT / 2 + 2) + "px";
     };
 
     DomWrangler.putControlsToTheRightOfTheCanvas = function() {
@@ -187,15 +243,20 @@
       this.mouseup = __bind(this.mouseup, this);
       this.mousemove = __bind(this.mousemove, this);
       this.mousedown = __bind(this.mousedown, this);
-      var canvas, ctx, evnt, _i, _len, _ref;
+      var canvas, ctx, eventNames, mouseEvent, touchEvent;
       canvasContainer || (canvasContainer = document.getElementById("canvas-container"));
       canvas = this.canvas = document.createElement("canvas");
       canvas.width = PEGBAR.CANVAS_WIDTH;
       canvas.height = PEGBAR.CANVAS_HEIGHT;
-      _ref = ["down", "move", "up"];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        evnt = _ref[_i];
-        canvas.addEventListener("mouse" + evnt, this["mouse" + evnt], false);
+      eventNames = {
+        "mousedown": "touchstart",
+        "mousemove": "touchmove",
+        "mouseup": "touchend"
+      };
+      for (mouseEvent in eventNames) {
+        touchEvent = eventNames[mouseEvent];
+        canvas.addEventListener(mouseEvent, this[mouseEvent], false);
+        canvas.addEventListener(touchEvent, this[mouseEvent], false);
       }
       ctx = this.ctx = canvas.getContext("2d");
       ctx.fillStyle = PEGBAR.BACKGROUND_COLOR.toString();
@@ -205,6 +266,7 @@
 
     DrawingCanvas.prototype.mousedown = function(evnt) {
       var ctx;
+      evnt.preventDefault();
       ctx = this.ctx;
       ctx.beginPath();
       ctx.moveTo(evnt.layerX, evnt.layerY);
@@ -213,16 +275,19 @@
 
     DrawingCanvas.prototype.mousemove = function(evnt) {
       var ctx;
+      evnt.preventDefault();
       if (this.isDrawing) {
         ctx = this.ctx;
         ctx.lineTo(evnt.layerX, evnt.layerY);
+        ctx.lineCap = "round";
+        ctx.lineWidth = 1;
         return ctx.stroke();
       }
     };
 
     DrawingCanvas.prototype.mouseup = function(evnt) {
+      evnt.preventDefault();
       if (this.isDrawing) {
-        this.mousemove(evnt);
         return this.isDrawing = false;
       }
     };
@@ -233,8 +298,16 @@
       return this.ctx.getImageData(0, 0, width, height);
     };
 
-    DrawingCanvas.prototype.putImageData = function(imgData) {
-      return this.ctx.putImageData(imgData, 0, 0);
+    DrawingCanvas.prototype.toDataURL = function() {
+      return this.canvas.toDataURL();
+    };
+
+    DrawingCanvas.prototype.putImageData = function(imgData, x, y) {
+      return this.ctx.putImageData(imgData, x || 0, y || 0);
+    };
+
+    DrawingCanvas.prototype.drawImage = function(img, x, y) {
+      return this.ctx.drawImage(img, x || 0, y || 0);
     };
 
     DrawingCanvas.prototype.createImageData = function(compressedImgData) {
@@ -386,7 +459,9 @@
   PEGBAR = window.PEGBAR || (window.PEGBAR = {});
 
   PEGBAR.PaperStack = (function() {
-    var __stack__, _canvasContainer, _currentFrameNumberDisplay, _el, _onionCountAhead, _onionCountBehind, _playing, _showGuideFrame, _showOnions, _timeout, _totalFramesDisplay;
+    var __stack__, _canvasContainer, _currentFrameNumberDisplay, _el, _onionCountAhead, _onionCountBehind, _playing, _showGuideFrame, _showOnions, _singleton, _timeout, _totalFramesDisplay;
+
+    _singleton = null;
 
     _el = function(id) {
       return document.getElementById(id);
@@ -415,6 +490,10 @@
     PaperStack.prototype.currentIndex = 0;
 
     function PaperStack() {
+      if (_singleton) {
+        return _singleton;
+      }
+      _singleton = this;
       _canvasContainer = _el("canvas-container");
       _currentFrameNumberDisplay = _el("current_frame");
       _totalFramesDisplay = _el("total_frames");
@@ -427,6 +506,10 @@
 
     PaperStack.prototype.getCurrentFrame = function() {
       return __stack__[this.currentIndex];
+    };
+
+    PaperStack.prototype.getFrameCount = function() {
+      return __stack__.length;
     };
 
     PaperStack.prototype.setGuideFrame = function(frameIndex) {
@@ -625,7 +708,70 @@
   PEGBAR = window.PEGBAR || (window.PEGBAR = {});
 
   PEGBAR.Timeline = (function() {
-    function Timeline() {}
+    var _divStack, _divWidth, _paperStack, _timelineContainer;
+
+    _paperStack = null;
+
+    _timelineContainer = null;
+
+    _divStack = [];
+
+    _divWidth = 10;
+
+    function Timeline() {
+      _paperStack = PEGBAR.paperStack;
+      _timelineContainer = document.getElementById("timeline-container");
+    }
+
+    Timeline.prototype.reconstruct = function() {
+      var currentFrame, diff, div, frameCount, i, timelineWidth, _i, _len;
+      frameCount = _paperStack.getFrameCount();
+      _divWidth = Math.max(PEGBAR.CANVAS_WIDTH / frameCount - 2, 16);
+      diff = _divStack.length - frameCount;
+      if (diff < 0) {
+        while (diff++) {
+          this.addDiv();
+        }
+      } else if (diff > 0) {
+        while (diff--) {
+          _divStack.pop();
+        }
+      }
+      _timelineContainer.innerHTML = "";
+      currentFrame = _paperStack.currentIndex;
+      for (i = _i = 0, _len = _divStack.length; _i < _len; i = ++_i) {
+        div = _divStack[i];
+        div.style.width = "" + _divWidth + "px";
+        div.style.background = currentFrame === i ? "#999" : "#ddd";
+        _timelineContainer.appendChild(div);
+      }
+      timelineWidth = frameCount * _divWidth;
+      if (timelineWidth > PEGBAR.CANVAS_WIDTH) {
+        return _timelineContainer.style.left = "" + (window.innerWidth / 2 - timelineWidth / 2) + "px";
+      }
+    };
+
+    Timeline.prototype.addDiv = function() {
+      var attr, div, val, _ref;
+      div = document.createElement("div");
+      _ref = {
+        height: "15px",
+        display: "inline-block",
+        border: "solid 1px #fff"
+      };
+      for (attr in _ref) {
+        val = _ref[attr];
+        div.style[attr] = val;
+      }
+      return _divStack.push(div);
+    };
+
+    Timeline.prototype.incrementColors = function() {
+      var currentFrame;
+      currentFrame = _paperStack.currentIndex;
+      _divStack[currentFrame].style.background = "#999";
+      return _divStack[(currentFrame || _divStack.length) - 1].style.background = "#ddd";
+    };
 
     return Timeline;
 

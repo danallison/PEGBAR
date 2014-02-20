@@ -8,13 +8,14 @@ PEGBAR.BACKGROUND_COLOR =
   toString: -> "rgba(#{@r}, #{@g}, #{@b}, #{@a})"
   getImgDataFriendlyRGBA: -> [@r, @g, @b, (@a * 255 | 0)]
 
-PEGBAR.CANVAS_WIDTH  = 400
-PEGBAR.CANVAS_HEIGHT = 300
+PEGBAR.CANVAS_WIDTH  = +localStorage.canvas_width  or 400
+PEGBAR.CANVAS_HEIGHT = +localStorage.canvas_height or 300
 
 PEGBAR.init = ->
   @paperStack = new @PaperStack
+  @timeline = new @Timeline
   @controls = new @Controls  
-  @DomWrangler.centerCanvas()
+  @DomWrangler.centerCanvasAndTimeline()
   @DomWrangler.putControlsToTheRightOfTheCanvas()
 
 PEGBAR.save = ->
@@ -56,5 +57,29 @@ do ->
       _exportingGif = false
       window.open(URL.createObjectURL(blob))
 
-    gif.render();
+    gif.render()
 
+PEGBAR.exportPNGSpriteSheet = ->
+  scratchCanvas = document.createElement 'canvas'
+  scratchCanvas.height = @CANVAS_HEIGHT
+
+  stack = @paperStack.getStack()
+  scratchCanvas.width = @CANVAS_WIDTH * stack.length
+
+  scratchCtx = scratchCanvas.getContext '2d'
+  for frm, i in stack 
+    scratchCtx.putImageData frm.getImageData(), @CANVAS_WIDTH * i, 0
+
+  window.open scratchCanvas.toDataURL()
+
+PEGBAR.loadImageFile = (event) ->
+  input = event.target
+
+  reader = new FileReader
+  reader.onload = (event) =>
+    dataURL = event.target.result
+    img = document.createElement 'img'
+    img.src = dataURL
+    @paperStack.getCurrentFrame().drawImage img
+
+  reader.readAsDataURL(input.files[0]);

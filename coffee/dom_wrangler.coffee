@@ -2,13 +2,15 @@ PEGBAR = window.PEGBAR ||= {}
 
 class PEGBAR.DomWrangler
 
-  @centerCanvas: ->
+  @centerCanvasAndTimeline: ->
     doc = window.document
 
     canvasContainer = doc.getElementById "canvas-container"
+    timelineContainer = doc.getElementById "timeline-container"
     
     canvasContainer.style.top  = "#{window.innerHeight / 2 - PEGBAR.CANVAS_HEIGHT / 2}px"
-    canvasContainer.style.left = "#{window.innerWidth  / 2 - PEGBAR.CANVAS_WIDTH  / 2}px"
+    timelineContainer.style.left = canvasContainer.style.left = "#{window.innerWidth  / 2 - PEGBAR.CANVAS_WIDTH  / 2}px"
+    timelineContainer.style.top = "#{window.innerHeight / 2 + PEGBAR.CANVAS_HEIGHT / 2 + 2}px"
 
   @putControlsToTheRightOfTheCanvas: ->
     doc = window.document

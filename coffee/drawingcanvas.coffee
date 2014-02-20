@@ -10,8 +10,14 @@ class PEGBAR.DrawingCanvas
     canvas = @canvas = document.createElement "canvas"
     canvas.width  = PEGBAR.CANVAS_WIDTH
     canvas.height = PEGBAR.CANVAS_HEIGHT
-    for evnt in ["down", "move", "up"]
-      canvas.addEventListener "mouse#{evnt}", @["mouse#{evnt}"], false
+    eventNames = {
+      "mousedown" : "touchstart"
+      "mousemove" : "touchmove"
+      "mouseup"   : "touchend"
+    }
+    for mouseEvent, touchEvent of eventNames
+      canvas.addEventListener mouseEvent, @[mouseEvent], false
+      canvas.addEventListener touchEvent, @[mouseEvent], false
 
     ctx = @ctx = canvas.getContext "2d"
     ctx.fillStyle = PEGBAR.BACKGROUND_COLOR.toString()
@@ -21,6 +27,7 @@ class PEGBAR.DrawingCanvas
 
 
   mousedown: (evnt) =>
+    evnt.preventDefault()
     {ctx} = @
     ctx.beginPath()
     ctx.moveTo evnt.layerX, evnt.layerY
@@ -28,14 +35,18 @@ class PEGBAR.DrawingCanvas
     # canvasContainer.style.cursor = "none"
 
   mousemove: (evnt) =>
+    evnt.preventDefault()
     if @isDrawing
       {ctx} = @
       ctx.lineTo evnt.layerX, evnt.layerY
+      ctx.lineCap = "round"
+      ctx.lineWidth = 1
       ctx.stroke()
 
   mouseup: (evnt) =>
+    evnt.preventDefault()
     if @isDrawing
-      @mousemove evnt 
+      # @mousemove evnt 
       @isDrawing = false
       # canvasContainer.style.cursor = "crosshair"
 
@@ -43,9 +54,18 @@ class PEGBAR.DrawingCanvas
     {width, height} = @canvas
     @ctx.getImageData 0, 0, width, height
 
-  putImageData: (imgData) ->
+  toDataURL: ->
+    @canvas.toDataURL()
+
+  # getBlob: ->
+  #   @canvas.toBlob()
+
+  putImageData: (imgData, x, y) ->
     # imgData ||= PEGBAR.frms.currentFrm().imgData
-    @ctx.putImageData imgData, 0, 0
+    @ctx.putImageData imgData, x or 0, y or 0
+
+  drawImage: (img, x, y) ->
+    @ctx.drawImage img, x or 0, y or 0
 
   createImageData: (compressedImgData) ->
     {WIDTH, HEIGHT} = PEGBAR

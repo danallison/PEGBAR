@@ -1,7 +1,7 @@
 PEGBAR = window.PEGBAR ||= {}
 
 class PEGBAR.PaperStack
-  
+  _singleton = null  
   _el = (id) -> document.getElementById id
   _canvasContainer = null
   _currentFrameNumberDisplay = null
@@ -18,6 +18,8 @@ class PEGBAR.PaperStack
   currentIndex: 0
 
   constructor: ->
+    return _singleton if _singleton
+    _singleton = @
     _canvasContainer = _el "canvas-container"
     _currentFrameNumberDisplay = _el "current_frame"
     _totalFramesDisplay = _el "total_frames"
@@ -26,6 +28,8 @@ class PEGBAR.PaperStack
   getStack: -> __stack__.slice()
 
   getCurrentFrame: -> __stack__[@currentIndex]
+
+  getFrameCount: -> __stack__.length
 
   setGuideFrame: (frameIndex = @currentIndex) ->
     if _.isNonNegativeInteger frameIndex
