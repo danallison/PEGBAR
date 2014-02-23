@@ -20,6 +20,7 @@
       <div>frame <span id="current_frame">1</span> of <span id="total_frames">1</span></div>
       <div id="new" class="clickable">new frame</div> 
       <div id="guide" class="clickable">set guide frame</div> 
+      <div id="draw_erase" class="clickable">erase</div> 
       <div>.</div>
       <div id="delete" class="clickable">delete frame</div> 
       <div>.</div>
@@ -30,10 +31,13 @@
       <div>.</div>
       <div id="export_gif" class="clickable">export animated gif</div>
       <div id="export_sprite" class="clickable">export png sprite sheet</div>
+      <div>.</div>
+      <input type="text" id="proj_name" placeholder="project name">
+      <div id="save_proj" class="clickable">save project</div>
     </div>
   </div>
 
-  <input type='file' accept='image/*' onchange='PEGBAR.loadImageFile(event)'><br>  
+  <input type='file' onchange='PEGBAR.loadFile(event)'><br>  
 
   <script type="text/javascript" src="gif.js"></script>
   <script type="text/javascript" src="lodash.js"></script>

@@ -8,8 +8,8 @@ class PEGBAR.PaperStack
   _totalFramesDisplay = null
   _showOnions = true
   _showGuideFrame = true
-  _onionCountBehind = 2
-  _onionCountAhead = 2
+  _onionCountBehind = 1
+  _onionCountAhead = 1
   _playing = false
   _timeout = null
   
@@ -24,6 +24,23 @@ class PEGBAR.PaperStack
     _currentFrameNumberDisplay = _el "current_frame"
     _totalFramesDisplay = _el "total_frames"
     @newFrame()
+
+  clearStack: ->
+    __stack__ = []
+    @currentIndex = 0
+
+  rebuildStack: (pngDataArray) ->
+    @clearStack()
+    for frm, i in pngDataArray
+      img = document.createElement 'img'
+      img.src = frm 
+      img.style.display = "none"
+      document.body.appendChild img # Firefox requires the element to be in the dom for this to work
+      @newFrame i, img
+      _.defer (img) -> 
+        document.body.removeChild img
+      , img
+    @reconstruct()
 
   getStack: -> __stack__.slice()
 
@@ -126,9 +143,11 @@ class PEGBAR.PaperStack
   nextFrame: ->
     @currentIndex = (@currentIndex + 1) % __stack__.length
 
-  newFrame: (atIndex) ->
+  newFrame: (atIndex, img) ->
     atIndex = @currentIndex + 1 unless _.isNonNegativeInteger atIndex
-    __stack__.splice atIndex, 0, new PEGBAR.DrawingCanvas
+    frame = new PEGBAR.DrawingCanvas
+    frame.drawImage(img) if _.isElement img
+    __stack__.splice atIndex, 0, frame
 
   removeFrame: (atIndex) ->
     atIndex = @currentIndex unless _.isNonNegativeInteger atIndex

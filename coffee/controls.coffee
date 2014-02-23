@@ -12,6 +12,10 @@ class PEGBAR.Controls
     playButton = el "play"
     exportGifButton = el "export_gif"
     exportSpriteButton = el "export_sprite"
+    drawEraseButton = el "draw_erase"
+    saveButton = el "save_proj"
+
+    projNameInput = el "proj_name"
 
     {paperStack, timeline} = PEGBAR
     nextButton.addEventListener "click", (evt) ->
@@ -70,3 +74,16 @@ class PEGBAR.Controls
       evt.preventDefault()
       evt.stopPropagation()
       PEGBAR.exportPNGSpriteSheet()
+
+    drawEraseText = { "draw" : "erase", "erase" : "draw" }
+    drawEraseButton.addEventListener "click", (evt) ->
+      evt.preventDefault()
+      evt.stopPropagation()
+      PEGBAR.DrawingCanvas.toggleEraser()
+      drawEraseButton.textContent = drawEraseText[drawEraseButton.textContent]      
+
+    saveButton.addEventListener "click", (evt) ->
+      evt.preventDefault()
+      evt.stopPropagation()
+      projName = projNameInput.value.replace(/\s/g, "_") or "unnamed_project"
+      PEGBAR.save true, projName

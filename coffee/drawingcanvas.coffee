@@ -1,54 +1,101 @@
 PEGBAR = window.PEGBAR ||= {}
 
 class PEGBAR.DrawingCanvas
-  canvasContainer = null
+  _canvasContainer = null
+  _pressureSensitive = _.isNumber(new MouseEvent('move').mozPressure)
+  _baseLineWidth = 1 - (+_pressureSensitive / 2)
+  _lineCap = 'butt'
+  _globalCompositeOp = 'source-over'
+  _getLineWidth = if _pressureSensitive
+    (evnt) -> _baseLineWidth + evnt.mozPressure * 2
+  else
+    -> _baseLineWidth
+
+  _eventNames = 
+    "mousedown" : "touchstart"
+    "mousemove" : "touchmove"
+    "mouseup"   : "touchend"
+  
+  _addListener = if 'ontouchstart' of document.body
+    (dc, cnv, mouseEvent, touchEvent) ->
+      cnv.addEventListener touchEvent, dc[mouseEvent], false
+  else 
+    (dc, cnv, mouseEvent) ->
+      cnv.addEventListener mouseEvent, dc[mouseEvent], false
+
+  _eraserActive = false
+  _drawQueue = []
+  _draw = do ->
+    drawing = false
+    newPath = if _pressureSensitive
+      (ctx, x, y) ->
+        ctx.beginPath()
+        ctx.moveTo x, y
+    else 
+      _.noop
+    return (ctx) ->
+      return if drawing
+      drawing = true
+      _.defer ->
+        console.log _drawQueue.length
+        while _drawQueue.length
+          [x, y, lineWidth] = _drawQueue.shift()
+          ctx.lineTo x, y
+          ctx.lineWidth = lineWidth
+          ctx.stroke()
+          newPath ctx, x, y
+        drawing = false
+
+  @toggleEraser: -> 
+    if _eraserActive 
+      _eraserActive = false
+      _baseLineWidth = 1 - (+_pressureSensitive / 2)
+      _globalCompositeOp = 'source-over'
+      _lineCap = 'butt'
+    else 
+      _eraserActive = true
+      _baseLineWidth = 5
+      _globalCompositeOp = 'destination-out'
+      _lineCap = 'round'
 
   duration: 83
 
   constructor: ->
-    canvasContainer ||= document.getElementById "canvas-container"
+    _canvasContainer ||= document.getElementById "canvas-container"
     canvas = @canvas = document.createElement "canvas"
     canvas.width  = PEGBAR.CANVAS_WIDTH
     canvas.height = PEGBAR.CANVAS_HEIGHT
-    eventNames = {
-      "mousedown" : "touchstart"
-      "mousemove" : "touchmove"
-      "mouseup"   : "touchend"
-    }
-    for mouseEvent, touchEvent of eventNames
-      canvas.addEventListener mouseEvent, @[mouseEvent], false
-      canvas.addEventListener touchEvent, @[mouseEvent], false
+    
+    _addListener(@, canvas, mouseEvent, touchEvent) for mouseEvent, touchEvent of _eventNames  
 
     ctx = @ctx = canvas.getContext "2d"
     ctx.fillStyle = PEGBAR.BACKGROUND_COLOR.toString()
     ctx.fillRect 0, 0, canvas.width, canvas.height
     
-    canvasContainer.appendChild canvas
+    _canvasContainer.appendChild canvas
 
 
   mousedown: (evnt) =>
     evnt.preventDefault()
+    _drawQueue = []
     {ctx} = @
+    ctx.globalCompositeOperation = _globalCompositeOp
+    ctx.lineCap = _lineCap
     ctx.beginPath()
     ctx.moveTo evnt.layerX, evnt.layerY
     @isDrawing = true
-    # canvasContainer.style.cursor = "none"
+    # _canvasContainer.style.cursor = "none"
 
   mousemove: (evnt) =>
     evnt.preventDefault()
     if @isDrawing
-      {ctx} = @
-      ctx.lineTo evnt.layerX, evnt.layerY
-      ctx.lineCap = "round"
-      ctx.lineWidth = 1
-      ctx.stroke()
+      _drawQueue.push [evnt.layerX, evnt.layerY, _getLineWidth(evnt)]
+      _draw @ctx      
 
   mouseup: (evnt) =>
     evnt.preventDefault()
-    if @isDrawing
-      # @mousemove evnt 
-      @isDrawing = false
-      # canvasContainer.style.cursor = "crosshair"
+    @isDrawing = false
+    # _canvasContainer.style.cursor = "crosshair"
 
   getImageData: ->
     {width, height} = @canvas
@@ -57,27 +104,12 @@ class PEGBAR.DrawingCanvas
   toDataURL: ->
     @canvas.toDataURL()
 
-  # getBlob: ->
-  #   @canvas.toBlob()
-
   putImageData: (imgData, x, y) ->
     # imgData ||= PEGBAR.frms.currentFrm().imgData
     @ctx.putImageData imgData, x or 0, y or 0
 
   drawImage: (img, x, y) ->
     @ctx.drawImage img, x or 0, y or 0
-
-  createImageData: (compressedImgData) ->
-    {WIDTH, HEIGHT} = PEGBAR
-    imgData = @ctx.createImageData WIDTH, HEIGHT
-    bckgrnd = PEGBAR.BACKGROUND_COLOR.getImgDataFriendlyRGBA()
-    imgData[i] = bckgrnd[i % 4] for i in [0...WIDTH * HEIGHT * 4]
-    if compressedImgData
-      for datum in compressedImgData
-        [i, val] = datum
-        imgData[i] = val
-    return imgData
-
 
   clearCanvas: ->
     {canvas, ctx} = @

@@ -9,9 +9,12 @@
     r: 255,
     g: 255,
     b: 255,
-    a: 0.1,
+    a: 0,
     toString: function() {
       return "rgba(" + this.r + ", " + this.g + ", " + this.b + ", " + this.a + ")";
+    },
+    toStringOpaque: function() {
+      return "rgba(" + this.r + ", " + this.g + ", " + this.b + ", 1)";
     },
     getImgDataFriendlyRGBA: function() {
       return [this.r, this.g, this.b, this.a * 255 | 0];
@@ -30,37 +33,11 @@
     return this.DomWrangler.putControlsToTheRightOfTheCanvas();
   };
 
-  PEGBAR.save = function() {
-    var saveData;
-    saveData = {
-      bckgrnd: this.BACKGROUND_COLOR.toString(),
-      width: this.CANVAS_WIDTH,
-      height: this.CANVAS_HEIGHT
-    };
-    saveData.frms = this.frms.getSaveData();
-    return JSON.stringify(saveData);
-  };
-
-  PEGBAR.open = function(saveData) {
-    var BC, a, b, bckgrnd, frms, g, height, r, width, _ref, _ref1;
-    _ref = JSON.parse(saveData), bckgrnd = _ref.bckgrnd, width = _ref.width, height = _ref.height, frms = _ref.frms;
-    BC = this.BACKGROUND_COLOR;
-    _ref1 = bckgrnd.replace(/rgba\(|\)/g, '').split(', '), r = _ref1[0], g = _ref1[1], b = _ref1[2], a = _ref1[3];
-    BC.r = +r;
-    BC.g = +g;
-    BC.b = +b;
-    BC.a = +a;
-    this.CANVAS_WIDTH = width;
-    this.CANVAS_HEIGHT = height;
-    this.frms.loadFromSaveData(frms);
-    return this.drawingCanvas.putImageData();
-  };
-
   (function() {
     var _exportingGif;
     _exportingGif = false;
     return PEGBAR.exportGif = function() {
-      var frm, gif, stack, _i, _len,
+      var frm, gif, height, opaqueBackground, scratchFrm, stack, width, _i, _len, _ref,
         _this = this;
       if (_exportingGif) {
         return;
@@ -72,9 +49,17 @@
         background: "#fff"
       });
       stack = this.paperStack.getStack();
+      scratchFrm = new this.DrawingCanvas;
+      _ref = scratchFrm.canvas, width = _ref.width, height = _ref.height;
+      opaqueBackground = PEGBAR.BACKGROUND_COLOR.toStringOpaque();
       for (_i = 0, _len = stack.length; _i < _len; _i++) {
         frm = stack[_i];
-        gif.addFrame(frm.getImageData(), {
+        scratchFrm.clearCanvas();
+        scratchFrm.ctx.fillStyle = opaqueBackground;
+        scratchFrm.ctx.fillRect(0, 0, width, height);
+        scratchFrm.ctx.globalCompositeOperation = 'source-over';
+        scratchFrm.drawImage(frm.canvas);
+        gif.addFrame(scratchFrm.getImageData(), {
           copy: true,
           delay: frm.duration
         });
@@ -88,33 +73,110 @@
   })();
 
   PEGBAR.exportPNGSpriteSheet = function() {
-    var frm, i, scratchCanvas, scratchCtx, stack, _i, _len;
-    scratchCanvas = document.createElement('canvas');
-    scratchCanvas.height = this.CANVAS_HEIGHT;
+    var frm, i, spriteCanvas, spriteCtx, stack, _i, _len;
+    spriteCanvas = document.createElement('canvas');
+    spriteCanvas.height = this.CANVAS_HEIGHT;
     stack = this.paperStack.getStack();
-    scratchCanvas.width = this.CANVAS_WIDTH * stack.length;
-    scratchCtx = scratchCanvas.getContext('2d');
+    spriteCanvas.width = this.CANVAS_WIDTH * stack.length;
+    spriteCtx = spriteCanvas.getContext('2d');
     for (i = _i = 0, _len = stack.length; _i < _len; i = ++_i) {
       frm = stack[i];
-      scratchCtx.putImageData(frm.getImageData(), this.CANVAS_WIDTH * i, 0);
+      spriteCtx.putImageData(frm.getImageData(), this.CANVAS_WIDTH * i, 0);
     }
-    return window.open(scratchCanvas.toDataURL());
+    return window.open(spriteCanvas.toDataURL());
   };
 
-  PEGBAR.loadImageFile = function(event) {
-    var input, reader,
+  PEGBAR.loadFile = function(evnt) {
+    var file, fileExtension, fileName, input, projName, reader,
       _this = this;
-    input = event.target;
+    input = evnt.target;
+    file = input.files[0];
+    fileName = file.name.split('.');
+    fileExtension = fileName.pop();
+    projName = fileName.join('.');
     reader = new FileReader;
-    reader.onload = function(event) {
-      var dataURL, img;
-      dataURL = event.target.result;
-      img = document.createElement('img');
-      img.src = dataURL;
-      return _this.paperStack.getCurrentFrame().drawImage(img);
-    };
-    return reader.readAsDataURL(input.files[0]);
+    if (fileExtension === 'pegbar') {
+      reader.onload = function(e) {
+        return _this.open(e.target.result);
+      };
+      return reader.readAsText(file);
+    } else {
+      reader.onload = function(e) {
+        var dataURL, img;
+        dataURL = e.target.result;
+        img = document.createElement('img');
+        img.src = dataURL;
+        return _this.paperStack.getCurrentFrame().drawImage(img);
+      };
+      return reader.readAsDataURL(file);
+    }
   };
+
+  (function() {
+    var _docTemplate, _frameTemplate;
+    _docTemplate = _.template("<!doctype html>\n<head>\n  <meta charset=\"utf-8\">\n  <title><%= projName %></title>\n</head>\n<body>\n  <div>\n    This is a <a href=\"https://github.com/danallison/-PEG-BAR-\">*PEG*BAR*</a> project file, created <%= new Date().toString() %>.\n  </div>\n  <hr>\n  <div>\n    project name: <%= projName %> <br>\n    dimensions: <%= dimensions[0] %> x <%= dimensions[1] %> <br>\n    frame count: <%= frameCount %> <br>\n    duration: <%= totalDuration %> milliseconds\n  </div>\n<%= frames %>\n</body>");
+    _frameTemplate = _.template("  <hr>\n  <div> \n    frame <%= frameNumber %> <br> \n    duration: <%= duration %> milliseconds <br>\n    <img src=\"<%= dataURL %>\">\n  </div>\n");
+    PEGBAR.save = function(download, fileName) {
+      var a, blob, dataString, dataURLs, durations, frameCount, frames, height, stack, totalDuration, width, _ref;
+      if (fileName == null) {
+        fileName = 'unnamed_project';
+      }
+      stack = this.paperStack.getStack();
+      dataURLs = _.invoke(stack, 'toDataURL');
+      durations = _.pluck(stack, 'duration');
+      totalDuration = _.reduce(durations, (function(d, m) {
+        return d + m;
+      }), 0);
+      if (download) {
+        _ref = stack[0].canvas, width = _ref.width, height = _ref.height;
+        frameCount = stack.length;
+        frames = dataURLs.map(function(dataURL, i) {
+          return _frameTemplate({
+            dataURL: dataURL,
+            frameNumber: i + 1,
+            duration: durations[i]
+          });
+        }).join('');
+        dataString = _docTemplate({
+          projName: fileName,
+          dimensions: [width, height],
+          frameCount: frameCount,
+          totalDuration: totalDuration,
+          frames: frames
+        });
+        blob = new Blob([dataString], {
+          type: 'text/plain'
+        });
+        a = document.createElement('a');
+        a.download = "" + fileName + ".pegbar";
+        a.href = URL.createObjectURL(blob);
+        a.dataset.downloadurl = ['text/plain', a.download, a.href].join(':');
+        a.style.display = "none";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        a.dataset.disabled = true;
+        return setTimeout(function() {
+          return URL.revokeObjectURL(a.href);
+        }, 1500);
+      } else {
+        return localStorage.project = dataURLs.join('\n');
+      }
+    };
+    return PEGBAR.open = function(dataString) {
+      var frames;
+      if (dataString) {
+        frames = dataString.match(/data\:image\/png.+?\"/g).map(function(str) {
+          return str.substring(0, str.length - 1);
+        });
+      } else if (dataString = localStorage.project) {
+        frames = dataString.split('\n');
+      } else {
+        throw 'nothing to open';
+      }
+      return this.paperStack.rebuildStack(frames);
+    };
+  })();
 
   PEGBAR = window.PEGBAR || (window.PEGBAR = {});
 
@@ -126,7 +188,7 @@
     };
 
     function Controls() {
-      var deleteButton, exportGifButton, exportSpriteButton, guideButton, newButton, nextButton, paperStack, playButton, prevButton, timeline;
+      var deleteButton, drawEraseButton, drawEraseText, exportGifButton, exportSpriteButton, guideButton, newButton, nextButton, paperStack, playButton, prevButton, projNameInput, saveButton, timeline;
       nextButton = el("next");
       prevButton = el("prev");
       newButton = el("new");
@@ -135,6 +197,9 @@
       playButton = el("play");
       exportGifButton = el("export_gif");
       exportSpriteButton = el("export_sprite");
+      drawEraseButton = el("draw_erase");
+      saveButton = el("save_proj");
+      projNameInput = el("proj_name");
       paperStack = PEGBAR.paperStack, timeline = PEGBAR.timeline;
       nextButton.addEventListener("click", function(evt) {
         evt.preventDefault();
@@ -195,6 +260,23 @@
         evt.stopPropagation();
         return PEGBAR.exportPNGSpriteSheet();
       });
+      drawEraseText = {
+        "draw": "erase",
+        "erase": "draw"
+      };
+      drawEraseButton.addEventListener("click", function(evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        PEGBAR.DrawingCanvas.toggleEraser();
+        return drawEraseButton.textContent = drawEraseText[drawEraseButton.textContent];
+      });
+      saveButton.addEventListener("click", function(evt) {
+        var projName;
+        evt.preventDefault();
+        evt.stopPropagation();
+        projName = projNameInput.value.replace(/\s/g, "_") || "unnamed_project";
+        return PEGBAR.save(true, projName);
+      });
     }
 
     return Controls;
@@ -233,9 +315,80 @@
   PEGBAR = window.PEGBAR || (window.PEGBAR = {});
 
   PEGBAR.DrawingCanvas = (function() {
-    var canvasContainer;
+    var _addListener, _baseLineWidth, _canvasContainer, _draw, _drawQueue, _eraserActive, _eventNames, _getLineWidth, _globalCompositeOp, _lineCap, _pressureSensitive;
 
-    canvasContainer = null;
+    _canvasContainer = null;
+
+    _pressureSensitive = _.isNumber(new MouseEvent('move').mozPressure);
+
+    _baseLineWidth = 1 - (+_pressureSensitive / 2);
+
+    _lineCap = 'butt';
+
+    _globalCompositeOp = 'source-over';
+
+    _getLineWidth = _pressureSensitive ? function(evnt) {
+      return _baseLineWidth + evnt.mozPressure * 2;
+    } : function() {
+      return _baseLineWidth;
+    };
+
+    _eventNames = {
+      "mousedown": "touchstart",
+      "mousemove": "touchmove",
+      "mouseup": "touchend"
+    };
+
+    _addListener = 'ontouchstart' in document.body ? function(dc, cnv, mouseEvent, touchEvent) {
+      return cnv.addEventListener(touchEvent, dc[mouseEvent], false);
+    } : function(dc, cnv, mouseEvent) {
+      return cnv.addEventListener(mouseEvent, dc[mouseEvent], false);
+    };
+
+    _eraserActive = false;
+
+    _drawQueue = [];
+
+    _draw = (function() {
+      var drawing, newPath;
+      drawing = false;
+      newPath = _pressureSensitive ? function(ctx, x, y) {
+        ctx.beginPath();
+        return ctx.moveTo(x, y);
+      } : _.noop;
+      return function(ctx) {
+        if (drawing) {
+          return;
+        }
+        drawing = true;
+        return _.defer(function() {
+          var lineWidth, x, y, _ref;
+          console.log(_drawQueue.length);
+          while (_drawQueue.length) {
+            _ref = _drawQueue.shift(), x = _ref[0], y = _ref[1], lineWidth = _ref[2];
+            ctx.lineTo(x, y);
+            ctx.lineWidth = lineWidth;
+            ctx.stroke();
+            newPath(ctx, x, y);
+          }
+          return drawing = false;
+        });
+      };
+    })();
+
+    DrawingCanvas.toggleEraser = function() {
+      if (_eraserActive) {
+        _eraserActive = false;
+        _baseLineWidth = 1 - (+_pressureSensitive / 2);
+        _globalCompositeOp = 'source-over';
+        return _lineCap = 'butt';
+      } else {
+        _eraserActive = true;
+        _baseLineWidth = 5;
+        _globalCompositeOp = 'destination-out';
+        return _lineCap = 'round';
+      }
+    };
 
     DrawingCanvas.prototype.duration = 83;
 
@@ -243,53 +396,44 @@
       this.mouseup = __bind(this.mouseup, this);
       this.mousemove = __bind(this.mousemove, this);
       this.mousedown = __bind(this.mousedown, this);
-      var canvas, ctx, eventNames, mouseEvent, touchEvent;
-      canvasContainer || (canvasContainer = document.getElementById("canvas-container"));
+      var canvas, ctx, mouseEvent, touchEvent;
+      _canvasContainer || (_canvasContainer = document.getElementById("canvas-container"));
       canvas = this.canvas = document.createElement("canvas");
       canvas.width = PEGBAR.CANVAS_WIDTH;
       canvas.height = PEGBAR.CANVAS_HEIGHT;
-      eventNames = {
-        "mousedown": "touchstart",
-        "mousemove": "touchmove",
-        "mouseup": "touchend"
-      };
-      for (mouseEvent in eventNames) {
-        touchEvent = eventNames[mouseEvent];
-        canvas.addEventListener(mouseEvent, this[mouseEvent], false);
-        canvas.addEventListener(touchEvent, this[mouseEvent], false);
+      for (mouseEvent in _eventNames) {
+        touchEvent = _eventNames[mouseEvent];
+        _addListener(this, canvas, mouseEvent, touchEvent);
       }
       ctx = this.ctx = canvas.getContext("2d");
       ctx.fillStyle = PEGBAR.BACKGROUND_COLOR.toString();
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      canvasContainer.appendChild(canvas);
+      _canvasContainer.appendChild(canvas);
     }
 
     DrawingCanvas.prototype.mousedown = function(evnt) {
       var ctx;
       evnt.preventDefault();
+      _drawQueue = [];
       ctx = this.ctx;
+      ctx.globalCompositeOperation = _globalCompositeOp;
+      ctx.lineCap = _lineCap;
       ctx.beginPath();
       ctx.moveTo(evnt.layerX, evnt.layerY);
       return this.isDrawing = true;
     };
 
     DrawingCanvas.prototype.mousemove = function(evnt) {
-      var ctx;
       evnt.preventDefault();
       if (this.isDrawing) {
-        ctx = this.ctx;
-        ctx.lineTo(evnt.layerX, evnt.layerY);
-        ctx.lineCap = "round";
-        ctx.lineWidth = 1;
-        return ctx.stroke();
+        _drawQueue.push([evnt.layerX, evnt.layerY, _getLineWidth(evnt)]);
+        return _draw(this.ctx);
       }
     };
 
     DrawingCanvas.prototype.mouseup = function(evnt) {
       evnt.preventDefault();
-      if (this.isDrawing) {
-        return this.isDrawing = false;
-      }
+      return this.isDrawing = false;
     };
 
     DrawingCanvas.prototype.getImageData = function() {
@@ -308,24 +452,6 @@
 
     DrawingCanvas.prototype.drawImage = function(img, x, y) {
       return this.ctx.drawImage(img, x || 0, y || 0);
-    };
-
-    DrawingCanvas.prototype.createImageData = function(compressedImgData) {
-      var HEIGHT, WIDTH, bckgrnd, datum, i, imgData, val, _i, _j, _len, _ref;
-      WIDTH = PEGBAR.WIDTH, HEIGHT = PEGBAR.HEIGHT;
-      imgData = this.ctx.createImageData(WIDTH, HEIGHT);
-      bckgrnd = PEGBAR.BACKGROUND_COLOR.getImgDataFriendlyRGBA();
-      for (i = _i = 0, _ref = WIDTH * HEIGHT * 4; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
-        imgData[i] = bckgrnd[i % 4];
-      }
-      if (compressedImgData) {
-        for (_j = 0, _len = compressedImgData.length; _j < _len; _j++) {
-          datum = compressedImgData[_j];
-          i = datum[0], val = datum[1];
-          imgData[i] = val;
-        }
-      }
-      return imgData;
     };
 
     DrawingCanvas.prototype.clearCanvas = function() {
@@ -477,9 +603,9 @@
 
     _showGuideFrame = true;
 
-    _onionCountBehind = 2;
+    _onionCountBehind = 1;
 
-    _onionCountAhead = 2;
+    _onionCountAhead = 1;
 
     _playing = false;
 
@@ -499,6 +625,28 @@
       _totalFramesDisplay = _el("total_frames");
       this.newFrame();
     }
+
+    PaperStack.prototype.clearStack = function() {
+      __stack__ = [];
+      return this.currentIndex = 0;
+    };
+
+    PaperStack.prototype.rebuildStack = function(pngDataArray) {
+      var frm, i, img, _i, _len;
+      this.clearStack();
+      for (i = _i = 0, _len = pngDataArray.length; _i < _len; i = ++_i) {
+        frm = pngDataArray[i];
+        img = document.createElement('img');
+        img.src = frm;
+        img.style.display = "none";
+        document.body.appendChild(img);
+        this.newFrame(i, img);
+        _.defer(function(img) {
+          return document.body.removeChild(img);
+        }, img);
+      }
+      return this.reconstruct();
+    };
 
     PaperStack.prototype.getStack = function() {
       return __stack__.slice();
@@ -640,11 +788,16 @@
       return this.currentIndex = (this.currentIndex + 1) % __stack__.length;
     };
 
-    PaperStack.prototype.newFrame = function(atIndex) {
+    PaperStack.prototype.newFrame = function(atIndex, img) {
+      var frame;
       if (!_.isNonNegativeInteger(atIndex)) {
         atIndex = this.currentIndex + 1;
       }
-      return __stack__.splice(atIndex, 0, new PEGBAR.DrawingCanvas);
+      frame = new PEGBAR.DrawingCanvas;
+      if (_.isElement(img)) {
+        frame.drawImage(img);
+      }
+      return __stack__.splice(atIndex, 0, frame);
     };
 
     PaperStack.prototype.removeFrame = function(atIndex) {
