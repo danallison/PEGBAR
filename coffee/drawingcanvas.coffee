@@ -4,7 +4,7 @@ class PEGBAR.DrawingCanvas
   _canvasContainer = null
   _pressureSensitive = _.isNumber(new MouseEvent('move').mozPressure)
   _baseLineWidth = 1 - (+_pressureSensitive / 2)
-  _lineCap = 'butt'
+  _lineCap = 'round'#'butt'
   _globalCompositeOp = 'source-over'
   _getLineWidth = if _pressureSensitive
     (evnt) -> _baseLineWidth + evnt.mozPressure * 2
@@ -51,7 +51,7 @@ class PEGBAR.DrawingCanvas
       _eraserActive = false
       _baseLineWidth = 1 - (+_pressureSensitive / 2)
       _globalCompositeOp = 'source-over'
-      _lineCap = 'butt'
+      # _lineCap = 'butt'
     else 
       _eraserActive = true
       _baseLineWidth = 5

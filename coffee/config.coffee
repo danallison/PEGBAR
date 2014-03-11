@@ -13,11 +13,21 @@ PEGBAR.CANVAS_WIDTH  = +localStorage.canvas_width  or 400
 PEGBAR.CANVAS_HEIGHT = +localStorage.canvas_height or 300
 
 PEGBAR.init = ->
+  atc.frameRate 1000 / 12
+  @atcTitle = atc "#pegbar_title"
   @paperStack = new @PaperStack
   @timeline = new @Timeline
   @controls = new @Controls  
   @DomWrangler.centerCanvasAndTimeline()
   @DomWrangler.putControlsToTheRightOfTheCanvas()
+
+  # document.getElementById("pegbar_title").addEventListener "mouseover", ->
+  #   spclChars = _.shuffle '. , / ? : | = + - _ * & ^ % $ # @ ! ~ `'.split ' '
+  #   charToTitle = (c) -> "#{c}PEG#{c}BAR#{c}"
+  #   titleFrames = (charToTitle(chr) for chr in _.first spclChars, 20)
+  #   PEGBAR.atcTitle.clearTimeline()
+  #     .frameByFrame(titleFrames, { loops: 1, duration: 1200 })
+  #     .go()
 
 do ->
   _exportingGif = false
@@ -83,33 +93,35 @@ PEGBAR.loadFile = (evnt) ->
     reader.readAsDataURL file
 
 do ->
-  _docTemplate = _.template "
-<!doctype html>\n
-<head>\n
-  <meta charset=\"utf-8\">\n
-  <title><%= projName %></title>\n
-</head>\n
-<body>\n
-  <div>\n
-    This is a <a href=\"https://github.com/danallison/-PEG-BAR-\">*PEG*BAR*</a> project file, created <%= new Date().toString() %>.\n
-  </div>\n
-  <hr>\n
-  <div>\n
-    project name: <%= projName %> <br>\n
-    dimensions: <%= dimensions[0] %> x <%= dimensions[1] %> <br>\n
-    frame count: <%= frameCount %> <br>\n
-    duration: <%= totalDuration %> milliseconds\n
-  </div>\n
-<%= frames %>\n
-</body>"
+  _docTemplate = _.template """
+    <!doctype html>
+    <head>
+      <meta charset=\"utf-8\">
+      <title><%= projName %></title>
+    </head>
+    <body>
+      <div>
+        This is a <a href=\"https://github.com/danallison/-PEG-BAR-\">*PEG*BAR*</a> project file, created <%= new Date().toString() %>.
+      </div>
+      <hr>
+      <div>
+        project name: <%= projName %> <br>
+        dimensions: <%= dimensions[0] %> x <%= dimensions[1] %> <br>
+        frame count: <%= frameCount %> <br>
+        duration: <%= totalDuration %> milliseconds
+      </div>
+    <%= frames %>
+    </body>
+    """
   
-  _frameTemplate = _.template "
-  <hr>\n
-  <div> \n
-    frame <%= frameNumber %> <br> \n
-    duration: <%= duration %> milliseconds <br>\n
-    <img src=\"<%= dataURL %>\">\n
-  </div>\n"
+  _frameTemplate = _.template """
+    <hr>
+    <div> 
+      frame <%= frameNumber %> <br> 
+      duration: <%= duration %> milliseconds <br>
+      <img src=\"<%= dataURL %>\">
+    </div>
+    """
 
   PEGBAR.save = (download, fileName = 'unnamed_project') ->
     stack = @paperStack.getStack()

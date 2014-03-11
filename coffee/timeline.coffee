@@ -20,10 +20,9 @@ class PEGBAR.Timeline
       _divStack.pop() while diff--
 
     _timelineContainer.innerHTML = ""
-    currentFrame = _paperStack.currentIndex
-    for div, i in _divStack
+    @repaintColors()
+    for div in _divStack
       div.style.width = "#{_divWidth}px"      
-      div.style.background = if currentFrame is i then "#999" else "#ddd"
       _timelineContainer.appendChild div
 
     timelineWidth = frameCount * _divWidth
@@ -37,9 +36,24 @@ class PEGBAR.Timeline
       display: "inline-block"
       border: "solid 1px #fff"
     }
+    
+    i = _divStack.length
+    div.addEventListener "mousedown", (evnt) =>
+      evnt.preventDefault()
+      _paperStack.currentIndex = i
+      _paperStack.reconstruct()
+      @repaintColors()
+
     _divStack.push div 
 
   incrementColors: ->
-    currentFrame = _paperStack.currentIndex
-    _divStack[currentFrame].style.background = "#999" 
-    _divStack[(currentFrame or _divStack.length) - 1].style.background = "#ddd"
+    {currentIndex} = _paperStack
+    _divStack[currentIndex].style.background = "#000" 
+    _divStack[(currentIndex or _divStack.length) - 1].style.background = "#ddd"
+
+  repaintColors: ->
+    {currentIndex} = _paperStack
+    div.style.background = "#ddd" for div in _divStack
+    _divStack[currentIndex - 1].style.background = "#999" if currentIndex > 0
+    _divStack[currentIndex + 1]?.style.background = "#999"
+    _divStack[currentIndex].style.background = "#000" 

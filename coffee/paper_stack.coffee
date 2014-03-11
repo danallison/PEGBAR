@@ -28,6 +28,7 @@ class PEGBAR.PaperStack
   clearStack: ->
     __stack__ = []
     @currentIndex = 0
+    return
 
   rebuildStack: (pngDataArray) ->
     @clearStack()
@@ -128,6 +129,7 @@ class PEGBAR.PaperStack
     _canvasContainer.appendChild currentFrame.canvas
     _currentFrameNumberDisplay.textContent = @currentIndex + 1
     _totalFramesDisplay.textContent = __stack__.length
+    PEGBAR.timeline.reconstruct()
 
 
   newOnionLayer: ->
@@ -174,6 +176,7 @@ class PEGBAR.PaperStack
       nextFrame = __stack__[@nextFrame()]
       nextFrame.canvas.style.display = "block"
       _currentFrameNumberDisplay.textContent = @currentIndex + 1
+      PEGBAR.timeline.incrementColors()
       _timeout = _.delay tick, nextFrame.duration
     
     tick()

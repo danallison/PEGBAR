@@ -2,6 +2,7 @@ PEGBAR = window.PEGBAR ||= {}
 
 class PEGBAR.Controls
   el = (id) -> document.getElementById id
+  durationObj = { duration: 300 }
 
   constructor: ->
     nextButton = el "next"
@@ -44,10 +45,22 @@ class PEGBAR.Controls
       evt.preventDefault()
       evt.stopPropagation()
       paperStack.setGuideFrame()
-      guideButton.textContent = "guide frame set"
+      textFrames = [
+        "set guide frame"
+        "et guide frame s"
+        "t guide frame se"
+        "guide frame set"
+      ]
+      atc(guideButton)
+        .frameByFrame(textFrames, {duration:500})
+        .go()
       _.delay ->
-        guideButton.textContent = "set guide frame"
-      , 1000
+        atc(guideButton)
+          .frameByFrame(textFrames.reverse().concat(
+              ["nset guide frame", "unset guide frame"]
+            ), {duration:500})
+          .go()
+      , 1500
 
     deleteButton.addEventListener "click", (evt) ->
       evt.preventDefault()
@@ -61,9 +74,13 @@ class PEGBAR.Controls
       evt.preventDefault()
       evt.stopPropagation()
       if paperStack.play()
-        playButton.textContent = "stop"
+        atc(playButton)
+          .typeOver("stop", durationObj)
+          .go()
       else
-        playButton.textContent = "play"
+        atc(playButton)
+          .typeOver("play", durationObj)
+          .go()
 
     exportGifButton.addEventListener "click", (evt) ->
       evt.preventDefault()
@@ -80,10 +97,28 @@ class PEGBAR.Controls
       evt.preventDefault()
       evt.stopPropagation()
       PEGBAR.DrawingCanvas.toggleEraser()
-      drawEraseButton.textContent = drawEraseText[drawEraseButton.textContent]      
+      atc(drawEraseButton)
+        .typeOver(drawEraseText[drawEraseButton.textContent], durationObj)
+        .go()
 
+
+    borderNone = ["red", "#ddd"]
     saveButton.addEventListener "click", (evt) ->
       evt.preventDefault()
       evt.stopPropagation()
-      projName = projNameInput.value.replace(/\s/g, "_") or "unnamed_project"
+      projName = projNameInput.value.replace(/\s/g, "_")
+      unless projName
+
+        # projNameInput.style.border = "2px solid red"
+        interval = setInterval ->
+          borderNone.push projNameInput.style.borderColor = borderNone.shift()
+        , 100
+        _.delay ->
+          clearInterval interval
+        , 1000
+        return
       PEGBAR.save true, projName
+
+
+
+
