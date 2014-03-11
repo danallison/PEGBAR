@@ -28,6 +28,7 @@ class PEGBAR.Timeline
     timelineWidth = frameCount * _divWidth
     if timelineWidth > PEGBAR.CANVAS_WIDTH
       _timelineContainer.style.left = "#{window.innerWidth  / 2 - timelineWidth / 2}px"
+    return
 
   addDiv: ->
     div = document.createElement "div"
@@ -45,11 +46,13 @@ class PEGBAR.Timeline
       @repaintColors()
 
     _divStack.push div 
+    return
 
   incrementColors: ->
     {currentIndex} = _paperStack
     _divStack[currentIndex].style.background = "#000" 
     _divStack[(currentIndex or _divStack.length) - 1].style.background = "#ddd"
+    return
 
   repaintColors: ->
     {currentIndex} = _paperStack
@@ -57,3 +60,4 @@ class PEGBAR.Timeline
     _divStack[currentIndex - 1].style.background = "#999" if currentIndex > 0
     _divStack[currentIndex + 1]?.style.background = "#999"
     _divStack[currentIndex].style.background = "#000" 
+    return

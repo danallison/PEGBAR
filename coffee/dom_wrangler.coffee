@@ -11,6 +11,7 @@ class PEGBAR.DomWrangler
     canvasContainer.style.top  = "#{window.innerHeight / 2 - PEGBAR.CANVAS_HEIGHT / 2}px"
     timelineContainer.style.left = canvasContainer.style.left = "#{window.innerWidth  / 2 - PEGBAR.CANVAS_WIDTH  / 2}px"
     timelineContainer.style.top = "#{window.innerHeight / 2 + PEGBAR.CANVAS_HEIGHT / 2 + 2}px"
+    return
 
   @putControlsToTheRightOfTheCanvas: ->
     doc = window.document
@@ -19,6 +20,7 @@ class PEGBAR.DomWrangler
 
     controlsContainer.style.top  = "#{window.innerHeight / 2 - PEGBAR.CANVAS_HEIGHT / 2}px"
     controlsContainer.style.left = "#{window.innerWidth  / 2 + PEGBAR.CANVAS_WIDTH  / 2 + 10}px"
+    return
 
   @addEventListenersToControls: ->
     

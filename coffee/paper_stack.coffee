@@ -42,12 +42,13 @@ class PEGBAR.PaperStack
         document.body.removeChild img
       , img
     @reconstruct()
+    return
 
-  getStack: -> __stack__.slice()
+  getStack: -> return __stack__.slice()
 
-  getCurrentFrame: -> __stack__[@currentIndex]
+  getCurrentFrame: -> return __stack__[@currentIndex]
 
-  getFrameCount: -> __stack__.length
+  getFrameCount: -> return __stack__.length
 
   setGuideFrame: (frameIndex = @currentIndex) ->
     if _.isNonNegativeInteger frameIndex
@@ -56,11 +57,13 @@ class PEGBAR.PaperStack
       @guideFrame = frameIndex
     else
       throw "expecting a positive integer or DOM element, instead got #{frameIndex}"
+    return
 
   setFrameDuration: (newDuration, index = @currentIndex) ->
     throw "new duration must be a positive number" unless _.isPositiveNumber newDuration
     throw "index must be a non-negative integer" unless _.isNonNegativeInteger index
     __stack__[index].duration = newDuration
+    return
 
   setOnionCount: (behindCount, aheadCount) ->
     throw "must provide a non-negative integer" unless _.isNonNegativeInteger(behindCount)
@@ -69,30 +72,37 @@ class PEGBAR.PaperStack
     _onionCountAhead = aheadCount
     _onionCountBehind = behindCount
     @reconstruct()
+    return
 
   hideOnions: ->
     _showOnions = false
     @reconstruct()
+    return
 
   showOnions: ->
     _showOnions = true
     @reconstruct()
+    return
 
   toggleOnions: ->
     _showOnions = not _showOnions
     @reconstruct()
+    return
 
   hideGuideFrame: ->
     _showGuideFrame = false
     @reconstruct()
+    return
 
   showGuideFrame: ->
     _showGuideFrame = true
     @reconstruct()
+    return
 
   toggleGuideFrame: ->
     _showGuideFrame = not _showGuideFrame
     @reconstruct()
+    return
 
   reconstruct: ->
     currentFrame = __stack__[@currentIndex]
@@ -130,6 +140,7 @@ class PEGBAR.PaperStack
     _currentFrameNumberDisplay.textContent = @currentIndex + 1
     _totalFramesDisplay.textContent = __stack__.length
     PEGBAR.timeline.reconstruct()
+    return
 
 
   newOnionLayer: ->
@@ -140,22 +151,24 @@ class PEGBAR.PaperStack
     return onion
 
   prevFrame: ->
-    @currentIndex = (@currentIndex - 1 + __stack__.length) % __stack__.length
+    return @currentIndex = (@currentIndex - 1 + __stack__.length) % __stack__.length
 
   nextFrame: ->
-    @currentIndex = (@currentIndex + 1) % __stack__.length
+    return @currentIndex = (@currentIndex + 1) % __stack__.length
 
   newFrame: (atIndex, img) ->
     atIndex = @currentIndex + 1 unless _.isNonNegativeInteger atIndex
     frame = new PEGBAR.DrawingCanvas
     frame.drawImage(img) if _.isElement img
     __stack__.splice atIndex, 0, frame
+    return frame
 
   removeFrame: (atIndex) ->
     atIndex = @currentIndex unless _.isNonNegativeInteger atIndex
-    __stack__.splice atIndex, 1
+    [removedFrame] = __stack__.splice atIndex, 1
     __stack__.push new PEGBAR.DrawingCanvas unless __stack__.length
     @currentIndex-- if @currentIndex is __stack__.length
+    return removedFrame
 
   insertTweenFrames: ->
     newStack = []
@@ -163,6 +176,7 @@ class PEGBAR.PaperStack
     newStack.pop()
     __stack__ = newStack
     @currentIndex = __stack__.length - 1
+    return
 
   play: ->
     return @stop() if _playing or __stack__.length is 1

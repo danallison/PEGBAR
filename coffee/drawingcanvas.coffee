@@ -4,7 +4,7 @@ class PEGBAR.DrawingCanvas
   _canvasContainer = null
   _pressureSensitive = _.isNumber(new MouseEvent('move').mozPressure)
   _baseLineWidth = 1 - (+_pressureSensitive / 2)
-  _lineCap = 'round'#'butt'
+  _lineCap = 'round'
   _globalCompositeOp = 'source-over'
   _getLineWidth = if _pressureSensitive
     (evnt) -> _baseLineWidth + evnt.mozPressure * 2
@@ -51,12 +51,11 @@ class PEGBAR.DrawingCanvas
       _eraserActive = false
       _baseLineWidth = 1 - (+_pressureSensitive / 2)
       _globalCompositeOp = 'source-over'
-      # _lineCap = 'butt'
     else 
       _eraserActive = true
       _baseLineWidth = 5
       _globalCompositeOp = 'destination-out'
-      _lineCap = 'round'
+    return
 
   duration: 83
 
@@ -84,32 +83,34 @@ class PEGBAR.DrawingCanvas
     ctx.beginPath()
     ctx.moveTo evnt.layerX, evnt.layerY
     @isDrawing = true
-    # _canvasContainer.style.cursor = "none"
+    return
 
   mousemove: (evnt) =>
     evnt.preventDefault()
     if @isDrawing
       _drawQueue.push [evnt.layerX, evnt.layerY, _getLineWidth(evnt)]
-      _draw @ctx      
+      _draw @ctx
+    return    
 
   mouseup: (evnt) =>
     evnt.preventDefault()
     @isDrawing = false
-    # _canvasContainer.style.cursor = "crosshair"
+    return
 
   getImageData: ->
     {width, height} = @canvas
-    @ctx.getImageData 0, 0, width, height
+    return @ctx.getImageData 0, 0, width, height
 
-  toDataURL: ->
-    @canvas.toDataURL()
+  toDataURL: -> return @canvas.toDataURL()
 
   putImageData: (imgData, x, y) ->
     # imgData ||= PEGBAR.frms.currentFrm().imgData
     @ctx.putImageData imgData, x or 0, y or 0
+    return
 
   drawImage: (img, x, y) ->
     @ctx.drawImage img, x or 0, y or 0
+    return
 
   clearCanvas: ->
     {canvas, ctx} = @
@@ -117,4 +118,5 @@ class PEGBAR.DrawingCanvas
     canvas.width = width
     ctx.fillStyle = PEGBAR.BACKGROUND_COLOR.toString()
     ctx.fillRect 0, 0, width, height
+    return
   

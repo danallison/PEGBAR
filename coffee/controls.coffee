@@ -25,6 +25,7 @@ class PEGBAR.Controls
       paperStack.nextFrame()
       paperStack.reconstruct()
       timeline.reconstruct()
+      return
 
     prevButton.addEventListener "click", (evt) ->
       evt.preventDefault()
@@ -32,6 +33,7 @@ class PEGBAR.Controls
       paperStack.prevFrame()
       paperStack.reconstruct()
       timeline.reconstruct()
+      return
 
     newButton.addEventListener "click", (evt) ->
       evt.preventDefault()
@@ -40,6 +42,7 @@ class PEGBAR.Controls
       paperStack.nextFrame()
       paperStack.reconstruct()
       timeline.reconstruct()
+      return
 
     guideButton.addEventListener "click", (evt) ->
       evt.preventDefault()
@@ -61,6 +64,7 @@ class PEGBAR.Controls
             ), {duration:500})
           .go()
       , 1500
+      return
 
     deleteButton.addEventListener "click", (evt) ->
       evt.preventDefault()
@@ -69,6 +73,7 @@ class PEGBAR.Controls
         paperStack.removeFrame()
         paperStack.reconstruct()
         timeline.reconstruct()
+      return
 
     playButton.addEventListener "click", (evt) ->
       evt.preventDefault()
@@ -81,16 +86,19 @@ class PEGBAR.Controls
         atc(playButton)
           .typeOver("play", durationObj)
           .go()
+      return
 
     exportGifButton.addEventListener "click", (evt) ->
       evt.preventDefault()
       evt.stopPropagation()
       PEGBAR.exportGif()
+      return
 
     exportSpriteButton.addEventListener "click", (evt) ->
       evt.preventDefault()
       evt.stopPropagation()
       PEGBAR.exportPNGSpriteSheet()
+      return
 
     drawEraseText = { "draw" : "erase", "erase" : "draw" }
     drawEraseButton.addEventListener "click", (evt) ->
@@ -100,6 +108,7 @@ class PEGBAR.Controls
       atc(drawEraseButton)
         .typeOver(drawEraseText[drawEraseButton.textContent], durationObj)
         .go()
+      return
 
 
     borderNone = ["red", "#ddd"]
@@ -118,6 +127,7 @@ class PEGBAR.Controls
         , 1000
         return
       PEGBAR.save true, projName
+      return
 
 
 

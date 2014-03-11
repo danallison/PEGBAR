@@ -33,33 +33,12 @@
     this.controls = new this.Controls;
     this.DomWrangler.centerCanvasAndTimeline();
     this.DomWrangler.putControlsToTheRightOfTheCanvas();
-    return document.getElementById("pegbar_title").addEventListener("mouseover", function() {
-      var charToTitle, chr, spclChars, titleFrames;
-      spclChars = _.shuffle('. , / ? : | = + - _ * & ^ % $ # @ ! ~ `'.split(' '));
-      charToTitle = function(c) {
-        return "" + c + "PEG" + c + "BAR" + c;
-      };
-      titleFrames = (function() {
-        var _i, _len, _ref, _results;
-        _ref = _.first(spclChars, 20);
-        _results = [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          chr = _ref[_i];
-          _results.push(charToTitle(chr));
-        }
-        return _results;
-      })();
-      return PEGBAR.atcTitle.clearTimeline().frameByFrame(titleFrames, {
-        loops: 1,
-        duration: 1200
-      }).go();
-    });
   };
 
   (function() {
     var _exportingGif;
     _exportingGif = false;
-    return PEGBAR.exportGif = function() {
+    PEGBAR.exportGif = function() {
       var frm, gif, height, opaqueBackground, scratchFrm, stack, width, _i, _len, _ref;
       if (_exportingGif) {
         return;
@@ -92,7 +71,7 @@
           return window.open(URL.createObjectURL(blob));
         };
       })(this));
-      return gif.render();
+      gif.render();
     };
   })();
 
@@ -107,7 +86,7 @@
       frm = stack[i];
       spriteCtx.putImageData(frm.getImageData(), this.CANVAS_WIDTH * i, 0);
     }
-    return window.open(spriteCanvas.toDataURL());
+    window.open(spriteCanvas.toDataURL());
   };
 
   PEGBAR.loadFile = function(evnt) {
@@ -121,7 +100,7 @@
     if (fileExtension === 'pegbar') {
       reader.onload = (function(_this) {
         return function(e) {
-          return _this.open(e.target.result);
+          _this.open(e.target.result);
         };
       })(this);
       return reader.readAsText(file);
@@ -132,10 +111,10 @@
           dataURL = e.target.result;
           img = document.createElement('img');
           img.src = dataURL;
-          return _this.paperStack.getCurrentFrame().drawImage(img);
+          _this.paperStack.getCurrentFrame().drawImage(img);
         };
       })(this);
-      return reader.readAsDataURL(file);
+      reader.readAsDataURL(file);
     }
   };
 
@@ -183,14 +162,14 @@
         a.click();
         document.body.removeChild(a);
         a.dataset.disabled = true;
-        return setTimeout(function() {
+        setTimeout(function() {
           return URL.revokeObjectURL(a.href);
         }, 1500);
       } else {
-        return localStorage.project = dataURLs.join('\n');
+        localStorage.project = dataURLs.join('\n');
       }
     };
-    return PEGBAR.open = function(dataString) {
+    PEGBAR.open = function(dataString) {
       var frames;
       if (dataString) {
         frames = dataString.match(/data\:image\/png.+?\"/g).map(function(str) {
@@ -201,7 +180,7 @@
       } else {
         throw 'nothing to open';
       }
-      return this.paperStack.rebuildStack(frames);
+      this.paperStack.rebuildStack(frames);
     };
   })();
 
@@ -237,14 +216,14 @@
         evt.stopPropagation();
         paperStack.nextFrame();
         paperStack.reconstruct();
-        return timeline.reconstruct();
+        timeline.reconstruct();
       });
       prevButton.addEventListener("click", function(evt) {
         evt.preventDefault();
         evt.stopPropagation();
         paperStack.prevFrame();
         paperStack.reconstruct();
-        return timeline.reconstruct();
+        timeline.reconstruct();
       });
       newButton.addEventListener("click", function(evt) {
         evt.preventDefault();
@@ -252,7 +231,7 @@
         paperStack.newFrame();
         paperStack.nextFrame();
         paperStack.reconstruct();
-        return timeline.reconstruct();
+        timeline.reconstruct();
       });
       guideButton.addEventListener("click", function(evt) {
         var textFrames;
@@ -263,7 +242,7 @@
         atc(guideButton).frameByFrame(textFrames, {
           duration: 500
         }).go();
-        return _.delay(function() {
+        _.delay(function() {
           return atc(guideButton).frameByFrame(textFrames.reverse().concat(["nset guide frame", "unset guide frame"]), {
             duration: 500
           }).go();
@@ -275,27 +254,27 @@
         if (confirm("are you sure?")) {
           paperStack.removeFrame();
           paperStack.reconstruct();
-          return timeline.reconstruct();
+          timeline.reconstruct();
         }
       });
       playButton.addEventListener("click", function(evt) {
         evt.preventDefault();
         evt.stopPropagation();
         if (paperStack.play()) {
-          return atc(playButton).typeOver("stop", durationObj).go();
+          atc(playButton).typeOver("stop", durationObj).go();
         } else {
-          return atc(playButton).typeOver("play", durationObj).go();
+          atc(playButton).typeOver("play", durationObj).go();
         }
       });
       exportGifButton.addEventListener("click", function(evt) {
         evt.preventDefault();
         evt.stopPropagation();
-        return PEGBAR.exportGif();
+        PEGBAR.exportGif();
       });
       exportSpriteButton.addEventListener("click", function(evt) {
         evt.preventDefault();
         evt.stopPropagation();
-        return PEGBAR.exportPNGSpriteSheet();
+        PEGBAR.exportPNGSpriteSheet();
       });
       drawEraseText = {
         "draw": "erase",
@@ -305,7 +284,7 @@
         evt.preventDefault();
         evt.stopPropagation();
         PEGBAR.DrawingCanvas.toggleEraser();
-        return atc(drawEraseButton).typeOver(drawEraseText[drawEraseButton.textContent], durationObj).go();
+        atc(drawEraseButton).typeOver(drawEraseText[drawEraseButton.textContent], durationObj).go();
       });
       borderNone = ["red", "#ddd"];
       saveButton.addEventListener("click", function(evt) {
@@ -322,7 +301,7 @@
           }, 1000);
           return;
         }
-        return PEGBAR.save(true, projName);
+        PEGBAR.save(true, projName);
       });
     }
 
@@ -342,7 +321,7 @@
       timelineContainer = doc.getElementById("timeline-container");
       canvasContainer.style.top = "" + (window.innerHeight / 2 - PEGBAR.CANVAS_HEIGHT / 2) + "px";
       timelineContainer.style.left = canvasContainer.style.left = "" + (window.innerWidth / 2 - PEGBAR.CANVAS_WIDTH / 2) + "px";
-      return timelineContainer.style.top = "" + (window.innerHeight / 2 + PEGBAR.CANVAS_HEIGHT / 2 + 2) + "px";
+      timelineContainer.style.top = "" + (window.innerHeight / 2 + PEGBAR.CANVAS_HEIGHT / 2 + 2) + "px";
     };
 
     DomWrangler.putControlsToTheRightOfTheCanvas = function() {
@@ -350,7 +329,7 @@
       doc = window.document;
       controlsContainer = doc.getElementById("controls-container");
       controlsContainer.style.top = "" + (window.innerHeight / 2 - PEGBAR.CANVAS_HEIGHT / 2) + "px";
-      return controlsContainer.style.left = "" + (window.innerWidth / 2 + PEGBAR.CANVAS_WIDTH / 2 + 10) + "px";
+      controlsContainer.style.left = "" + (window.innerWidth / 2 + PEGBAR.CANVAS_WIDTH / 2 + 10) + "px";
     };
 
     DomWrangler.addEventListenersToControls = function() {};
@@ -427,12 +406,11 @@
       if (_eraserActive) {
         _eraserActive = false;
         _baseLineWidth = 1 - (+_pressureSensitive / 2);
-        return _globalCompositeOp = 'source-over';
+        _globalCompositeOp = 'source-over';
       } else {
         _eraserActive = true;
         _baseLineWidth = 5;
         _globalCompositeOp = 'destination-out';
-        return _lineCap = 'round';
       }
     };
 
@@ -466,20 +444,20 @@
       ctx.lineCap = _lineCap;
       ctx.beginPath();
       ctx.moveTo(evnt.layerX, evnt.layerY);
-      return this.isDrawing = true;
+      this.isDrawing = true;
     };
 
     DrawingCanvas.prototype.mousemove = function(evnt) {
       evnt.preventDefault();
       if (this.isDrawing) {
         _drawQueue.push([evnt.layerX, evnt.layerY, _getLineWidth(evnt)]);
-        return _draw(this.ctx);
+        _draw(this.ctx);
       }
     };
 
     DrawingCanvas.prototype.mouseup = function(evnt) {
       evnt.preventDefault();
-      return this.isDrawing = false;
+      this.isDrawing = false;
     };
 
     DrawingCanvas.prototype.getImageData = function() {
@@ -493,11 +471,11 @@
     };
 
     DrawingCanvas.prototype.putImageData = function(imgData, x, y) {
-      return this.ctx.putImageData(imgData, x || 0, y || 0);
+      this.ctx.putImageData(imgData, x || 0, y || 0);
     };
 
     DrawingCanvas.prototype.drawImage = function(img, x, y) {
-      return this.ctx.drawImage(img, x || 0, y || 0);
+      this.ctx.drawImage(img, x || 0, y || 0);
     };
 
     DrawingCanvas.prototype.clearCanvas = function() {
@@ -506,7 +484,7 @@
       width = canvas.width, height = canvas.height;
       canvas.width = width;
       ctx.fillStyle = PEGBAR.BACKGROUND_COLOR.toString();
-      return ctx.fillRect(0, 0, width, height);
+      ctx.fillRect(0, 0, width, height);
     };
 
     return DrawingCanvas;
@@ -612,22 +590,6 @@
     return _.isNonNegativeNumber(n) && _.isInteger(n);
   };
 
-  _.removeAt = function(array, indexesToRemove) {
-    var index, slideBack;
-    if (typeof indexesToRemove === 'number') {
-      indexesToRemove = [].slice.call(arguments, 1).sort();
-    } else {
-      indexesToRemove = indexesToRemove.slice().sort();
-    }
-    slideBack = 0;
-    while (indexesToRemove.length) {
-      index = indexesToRemove.shift() - slideBack;
-      array.splice(index, 1);
-      slideBack++;
-    }
-    return array;
-  };
-
   PEGBAR = window.PEGBAR || (window.PEGBAR = {});
 
   PEGBAR.PaperStack = (function() {
@@ -674,7 +636,7 @@
 
     PaperStack.prototype.clearStack = function() {
       __stack__ = [];
-      return this.currentIndex = 0;
+      this.currentIndex = 0;
     };
 
     PaperStack.prototype.rebuildStack = function(pngDataArray) {
@@ -691,7 +653,7 @@
           return document.body.removeChild(img);
         }, img);
       }
-      return this.reconstruct();
+      this.reconstruct();
     };
 
     PaperStack.prototype.getStack = function() {
@@ -711,9 +673,9 @@
         frameIndex = this.currentIndex;
       }
       if (_.isNonNegativeInteger(frameIndex)) {
-        return this.guideFrame = __stack__[frameIndex].canvas;
+        this.guideFrame = __stack__[frameIndex].canvas;
       } else if (_.isElement(frameIndex)) {
-        return this.guideFrame = frameIndex;
+        this.guideFrame = frameIndex;
       } else {
         throw "expecting a positive integer or DOM element, instead got " + frameIndex;
       }
@@ -729,7 +691,7 @@
       if (!_.isNonNegativeInteger(index)) {
         throw "index must be a non-negative integer";
       }
-      return __stack__[index].duration = newDuration;
+      __stack__[index].duration = newDuration;
     };
 
     PaperStack.prototype.setOnionCount = function(behindCount, aheadCount) {
@@ -740,37 +702,37 @@
       aheadCount = _.isNonNegativeInteger(aheadCount) ? Math.min(aheadCount, 5) : behindCount;
       _onionCountAhead = aheadCount;
       _onionCountBehind = behindCount;
-      return this.reconstruct();
+      this.reconstruct();
     };
 
     PaperStack.prototype.hideOnions = function() {
       _showOnions = false;
-      return this.reconstruct();
+      this.reconstruct();
     };
 
     PaperStack.prototype.showOnions = function() {
       _showOnions = true;
-      return this.reconstruct();
+      this.reconstruct();
     };
 
     PaperStack.prototype.toggleOnions = function() {
       _showOnions = !_showOnions;
-      return this.reconstruct();
+      this.reconstruct();
     };
 
     PaperStack.prototype.hideGuideFrame = function() {
       _showGuideFrame = false;
-      return this.reconstruct();
+      this.reconstruct();
     };
 
     PaperStack.prototype.showGuideFrame = function() {
       _showGuideFrame = true;
-      return this.reconstruct();
+      this.reconstruct();
     };
 
     PaperStack.prototype.toggleGuideFrame = function() {
       _showGuideFrame = !_showGuideFrame;
-      return this.reconstruct();
+      this.reconstruct();
     };
 
     PaperStack.prototype.reconstruct = function() {
@@ -815,7 +777,7 @@
       _canvasContainer.appendChild(currentFrame.canvas);
       _currentFrameNumberDisplay.textContent = this.currentIndex + 1;
       _totalFramesDisplay.textContent = __stack__.length;
-      return PEGBAR.timeline.reconstruct();
+      PEGBAR.timeline.reconstruct();
     };
 
     PaperStack.prototype.newOnionLayer = function() {
@@ -844,20 +806,23 @@
       if (_.isElement(img)) {
         frame.drawImage(img);
       }
-      return __stack__.splice(atIndex, 0, frame);
+      __stack__.splice(atIndex, 0, frame);
+      return frame;
     };
 
     PaperStack.prototype.removeFrame = function(atIndex) {
+      var removedFrame;
       if (!_.isNonNegativeInteger(atIndex)) {
         atIndex = this.currentIndex;
       }
-      __stack__.splice(atIndex, 1);
+      removedFrame = __stack__.splice(atIndex, 1)[0];
       if (!__stack__.length) {
         __stack__.push(new PEGBAR.DrawingCanvas);
       }
       if (this.currentIndex === __stack__.length) {
-        return this.currentIndex--;
+        this.currentIndex--;
       }
+      return removedFrame;
     };
 
     PaperStack.prototype.insertTweenFrames = function() {
@@ -868,7 +833,7 @@
       }
       newStack.pop();
       __stack__ = newStack;
-      return this.currentIndex = __stack__.length - 1;
+      this.currentIndex = __stack__.length - 1;
     };
 
     PaperStack.prototype.play = function() {
@@ -948,7 +913,7 @@
       }
       timelineWidth = frameCount * _divWidth;
       if (timelineWidth > PEGBAR.CANVAS_WIDTH) {
-        return _timelineContainer.style.left = "" + (window.innerWidth / 2 - timelineWidth / 2) + "px";
+        _timelineContainer.style.left = "" + (window.innerWidth / 2 - timelineWidth / 2) + "px";
       }
     };
 
@@ -973,14 +938,14 @@
           return _this.repaintColors();
         };
       })(this));
-      return _divStack.push(div);
+      _divStack.push(div);
     };
 
     Timeline.prototype.incrementColors = function() {
       var currentIndex;
       currentIndex = _paperStack.currentIndex;
       _divStack[currentIndex].style.background = "#000";
-      return _divStack[(currentIndex || _divStack.length) - 1].style.background = "#ddd";
+      _divStack[(currentIndex || _divStack.length) - 1].style.background = "#ddd";
     };
 
     Timeline.prototype.repaintColors = function() {
@@ -996,7 +961,7 @@
       if ((_ref = _divStack[currentIndex + 1]) != null) {
         _ref.style.background = "#999";
       }
-      return _divStack[currentIndex].style.background = "#000";
+      _divStack[currentIndex].style.background = "#000";
     };
 
     return Timeline;

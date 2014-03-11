@@ -28,6 +28,7 @@ PEGBAR.init = ->
   #   PEGBAR.atcTitle.clearTimeline()
   #     .frameByFrame(titleFrames, { loops: 1, duration: 1200 })
   #     .go()
+  return
 
 do ->
   _exportingGif = false
@@ -58,6 +59,8 @@ do ->
       window.open(URL.createObjectURL(blob))
 
     gif.render()
+    return
+  return
 
 PEGBAR.exportPNGSpriteSheet = ->
   spriteCanvas = document.createElement 'canvas'
@@ -71,6 +74,7 @@ PEGBAR.exportPNGSpriteSheet = ->
     spriteCtx.putImageData frm.getImageData(), @CANVAS_WIDTH * i, 0
 
   window.open spriteCanvas.toDataURL()
+  return
 
 PEGBAR.loadFile = (evnt) ->
   input = evnt.target
@@ -81,7 +85,7 @@ PEGBAR.loadFile = (evnt) ->
   projName = fileName.join '.'
   reader = new FileReader
   if fileExtension is 'pegbar'
-    reader.onload = (e) => @open e.target.result
+    reader.onload = (e) => @open e.target.result; return
     reader.readAsText file
   else
     reader.onload = (e) =>
@@ -89,8 +93,10 @@ PEGBAR.loadFile = (evnt) ->
       img = document.createElement 'img'
       img.src = dataURL
       @paperStack.getCurrentFrame().drawImage img
+      return
 
     reader.readAsDataURL file
+    return
 
 do ->
   _docTemplate = _.template """
@@ -166,6 +172,7 @@ do ->
       , 1500
     else
       localStorage.project = dataURLs.join '\n'
+    return
 
   PEGBAR.open = (dataString) ->
     if dataString
@@ -176,6 +183,8 @@ do ->
       throw 'nothing to open'
 
     @paperStack.rebuildStack frames
+    return
+  return
       
 
 
