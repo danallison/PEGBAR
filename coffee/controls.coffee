@@ -97,7 +97,7 @@ class PEGBAR.Controls
     exportSpriteButton.addEventListener "click", (evt) ->
       evt.preventDefault()
       evt.stopPropagation()
-      PEGBAR.exportPNGSpriteSheet()
+      PEGBAR.exportTrimmedPNGSpriteSheet()
       return
 
     drawEraseText = { "draw" : "erase", "erase" : "draw" }

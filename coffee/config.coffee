@@ -76,6 +76,25 @@ PEGBAR.exportPNGSpriteSheet = ->
   window.open spriteCanvas.toDataURL()
   return
 
+PEGBAR.exportTrimmedPNGSpriteSheet = ->
+  {x, y} = @paperStack.getBoundingRectangle()
+  [minX, maxX] = x
+  [minY, maxY] = y
+  width = maxX - minX
+  height = maxY - minY
+
+  stack = @paperStack.getStack()
+  spriteCanvas = document.createElement 'canvas'
+  spriteCanvas.height = height
+  spriteCanvas.width = width * stack.length
+
+  spriteCtx = spriteCanvas.getContext '2d'
+  for frm, i in stack 
+    spriteCtx.putImageData frm.getImageData(minX, minY, width, height), width * i, 0
+
+  window.open spriteCanvas.toDataURL()
+  return
+
 PEGBAR.loadFile = (evnt) ->
   input = evnt.target
   # console.log event

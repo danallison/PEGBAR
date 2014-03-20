@@ -89,6 +89,25 @@
     window.open(spriteCanvas.toDataURL());
   };
 
+  PEGBAR.exportTrimmedPNGSpriteSheet = function() {
+    var frm, height, i, maxX, maxY, minX, minY, spriteCanvas, spriteCtx, stack, width, x, y, _i, _len, _ref;
+    _ref = this.paperStack.getBoundingRectangle(), x = _ref.x, y = _ref.y;
+    minX = x[0], maxX = x[1];
+    minY = y[0], maxY = y[1];
+    width = maxX - minX;
+    height = maxY - minY;
+    stack = this.paperStack.getStack();
+    spriteCanvas = document.createElement('canvas');
+    spriteCanvas.height = height;
+    spriteCanvas.width = width * stack.length;
+    spriteCtx = spriteCanvas.getContext('2d');
+    for (i = _i = 0, _len = stack.length; _i < _len; i = ++_i) {
+      frm = stack[i];
+      spriteCtx.putImageData(frm.getImageData(minX, minY, width, height), width * i, 0);
+    }
+    window.open(spriteCanvas.toDataURL());
+  };
+
   PEGBAR.loadFile = function(evnt) {
     var file, fileExtension, fileName, input, projName, reader;
     input = evnt.target;
@@ -274,7 +293,7 @@
       exportSpriteButton.addEventListener("click", function(evt) {
         evt.preventDefault();
         evt.stopPropagation();
-        PEGBAR.exportPNGSpriteSheet();
+        PEGBAR.exportTrimmedPNGSpriteSheet();
       });
       drawEraseText = {
         "draw": "erase",
@@ -460,10 +479,20 @@
       this.isDrawing = false;
     };
 
-    DrawingCanvas.prototype.getImageData = function() {
-      var height, width, _ref;
-      _ref = this.canvas, width = _ref.width, height = _ref.height;
-      return this.ctx.getImageData(0, 0, width, height);
+    DrawingCanvas.prototype.getImageData = function(x, y, width, height) {
+      if (x == null) {
+        x = 0;
+      }
+      if (y == null) {
+        y = 0;
+      }
+      if (width == null) {
+        width = this.canvas.width;
+      }
+      if (height == null) {
+        height = this.canvas.height;
+      }
+      return this.ctx.getImageData(x, y, width, height);
     };
 
     DrawingCanvas.prototype.toDataURL = function() {
@@ -889,6 +918,30 @@
       clearTimeout(_timeout);
       this.reconstruct();
       return _playing = false;
+    };
+
+    PaperStack.prototype.getBoundingRectangle = function() {
+      var boundingRectangles, frame, maxXs, maxYs, minXs, minYs, rectangle, _i, _j, _len, _len1;
+      boundingRectangles = [];
+      for (_i = 0, _len = __stack__.length; _i < _len; _i++) {
+        frame = __stack__[_i];
+        boundingRectangles.push(frame.getBoundingRectangle());
+      }
+      minXs = [];
+      maxXs = [];
+      minYs = [];
+      maxYs = [];
+      for (_j = 0, _len1 = boundingRectangles.length; _j < _len1; _j++) {
+        rectangle = boundingRectangles[_j];
+        minXs.push(rectangle.x[0]);
+        maxXs.push(rectangle.x[1]);
+        minYs.push(rectangle.y[0]);
+        maxYs.push(rectangle.y[1]);
+      }
+      return {
+        x: [_.min(minXs) - 2, _.max(maxXs) + 2],
+        y: [_.min(minYs) - 2, _.max(maxYs) + 2]
+      };
     };
 
     return PaperStack;

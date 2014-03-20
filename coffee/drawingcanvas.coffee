@@ -97,9 +97,8 @@ class PEGBAR.DrawingCanvas
     @isDrawing = false
     return
 
-  getImageData: ->
-    {width, height} = @canvas
-    return @ctx.getImageData 0, 0, width, height
+  getImageData: (x = 0, y = 0, width = @canvas.width, height = @canvas.height) ->
+    return @ctx.getImageData x, y, width, height
 
   toDataURL: -> return @canvas.toDataURL()
 
