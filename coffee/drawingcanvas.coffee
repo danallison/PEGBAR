@@ -112,6 +112,20 @@ class PEGBAR.DrawingCanvas
     @ctx.drawImage img, x or 0, y or 0
     return
 
+  getBoundingRectangle: ->
+    {width, height} = @canvas
+    imgData = @getImageData().data
+    pixels = { x: [], y: [] }
+    for y in [0..height]
+      for x in [0..width]
+        i = (y * width + x) * 4
+        if imgData[i + 3] > 0
+          pixels.x.push x
+          pixels.y.push y
+
+    return { x: [_.min(pixels.x), _.max(pixels.x)], y: [_.min(pixels.y), _.max(pixels.y)] }
+
+
   clearCanvas: ->
     {canvas, ctx} = @
     {width, height} = canvas

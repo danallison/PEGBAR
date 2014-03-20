@@ -478,6 +478,29 @@
       this.ctx.drawImage(img, x || 0, y || 0);
     };
 
+    DrawingCanvas.prototype.getBoundingRectangle = function() {
+      var height, i, imgData, pixels, width, x, y, _i, _j, _ref;
+      _ref = this.canvas, width = _ref.width, height = _ref.height;
+      imgData = this.getImageData().data;
+      pixels = {
+        x: [],
+        y: []
+      };
+      for (y = _i = 0; 0 <= height ? _i <= height : _i >= height; y = 0 <= height ? ++_i : --_i) {
+        for (x = _j = 0; 0 <= width ? _j <= width : _j >= width; x = 0 <= width ? ++_j : --_j) {
+          i = (y * width + x) * 4;
+          if (imgData[i + 3] > 0) {
+            pixels.x.push(x);
+            pixels.y.push(y);
+          }
+        }
+      }
+      return {
+        x: [_.min(pixels.x), _.max(pixels.x)],
+        y: [_.min(pixels.y), _.max(pixels.y)]
+      };
+    };
+
     DrawingCanvas.prototype.clearCanvas = function() {
       var canvas, ctx, height, width;
       canvas = this.canvas, ctx = this.ctx;
