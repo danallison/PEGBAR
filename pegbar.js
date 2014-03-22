@@ -138,7 +138,7 @@
 
   (function() {
     var _docTemplate, _frameTemplate;
-    _docTemplate = _.template("<!doctype html>\n<head>\n  <meta charset=\"utf-8\">\n  <title><%= projName %></title>\n</head>\n<body>\n  <div>\n    This is a <a href=\"https://github.com/danallison/-PEG-BAR-\">*PEG*BAR*</a> project file, created <%= new Date().toString() %>.\n  </div>\n  <hr>\n  <div>\n    project name: <%= projName %> <br>\n    dimensions: <%= dimensions[0] %> x <%= dimensions[1] %> <br>\n    frame count: <%= frameCount %> <br>\n    duration: <%= totalDuration %> milliseconds\n  </div>\n<%= frames %>\n</body>");
+    _docTemplate = _.template("<!doctype html>\n<head>\n  <meta charset=\"utf-8\">\n  <title><%= projName %></title>\n</head>\n<body>\n  <div>\n    This is a <a href=\"https://github.com/danallison/PEGBAR\">*PEG*BAR*</a> project file, created <%= new Date().toString() %>.\n  </div>\n  <hr>\n  <div>\n    project name: <%= projName %> <br>\n    dimensions: <%= dimensions[0] %> x <%= dimensions[1] %> <br>\n    frame count: <%= frameCount %> <br>\n    duration: <%= totalDuration %> milliseconds\n  </div>\n<%= frames %>\n</body>");
     _frameTemplate = _.template("<hr>\n<div> \n  frame <%= frameNumber %> <br> \n  duration: <%= duration %> milliseconds <br>\n  <img src=\"<%= dataURL %>\">\n</div>");
     PEGBAR.save = function(download, fileName) {
       var a, blob, dataString, dataURLs, durations, frameCount, frames, height, stack, totalDuration, width, _ref;

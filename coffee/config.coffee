@@ -125,7 +125,7 @@ do ->
     </head>
     <body>
       <div>
-        This is a <a href=\"https://github.com/danallison/-PEG-BAR-\">*PEG*BAR*</a> project file, created <%= new Date().toString() %>.
+        This is a <a href=\"https://github.com/danallison/PEGBAR\">*PEG*BAR*</a> project file, created <%= new Date().toString() %>.
       </div>
       <hr>
       <div>
