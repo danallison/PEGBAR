@@ -39,7 +39,7 @@
     var _exportingGif;
     _exportingGif = false;
     PEGBAR.exportGif = function() {
-      var frm, gif, height, opaqueBackground, scratchFrm, stack, width, _i, _len, _ref;
+      var frm, gif, height, opaqueBackground, scratchCanvas, scratchContext, stack, width, x, y, _i, _len, _ref;
       if (_exportingGif) {
         return;
       }
@@ -50,17 +50,20 @@
         background: "#fff"
       });
       stack = this.paperStack.getStack();
-      scratchFrm = new this.DrawingCanvas;
-      _ref = scratchFrm.canvas, width = _ref.width, height = _ref.height;
+      _ref = this.paperStack.getBoundingRectangle(), x = _ref.x, y = _ref.y, width = _ref.width, height = _ref.height;
+      scratchCanvas = document.createElement('canvas');
+      scratchCanvas.width = width;
+      scratchCanvas.height = height;
+      scratchContext = scratchCanvas.getContext('2d');
       opaqueBackground = PEGBAR.BACKGROUND_COLOR.toStringOpaque();
       for (_i = 0, _len = stack.length; _i < _len; _i++) {
         frm = stack[_i];
-        scratchFrm.clearCanvas();
-        scratchFrm.ctx.fillStyle = opaqueBackground;
-        scratchFrm.ctx.fillRect(0, 0, width, height);
-        scratchFrm.ctx.globalCompositeOperation = 'source-over';
-        scratchFrm.drawImage(frm.canvas);
-        gif.addFrame(scratchFrm.getImageData(), {
+        scratchCanvas.width = width;
+        scratchContext.fillStyle = opaqueBackground;
+        scratchContext.fillRect(0, 0, width, height);
+        scratchContext.globalCompositeOperation = 'source-over';
+        scratchContext.drawImage(frm.canvas, -x, -y);
+        gif.addFrame(scratchContext.getImageData(0, 0, width, height), {
           copy: true,
           delay: frm.duration
         });
@@ -90,12 +93,8 @@
   };
 
   PEGBAR.exportTrimmedPNGSpriteSheet = function() {
-    var frm, height, i, maxX, maxY, minX, minY, spriteCanvas, spriteCtx, stack, width, x, y, _i, _len, _ref;
-    _ref = this.paperStack.getBoundingRectangle(), x = _ref.x, y = _ref.y;
-    minX = x[0], maxX = x[1];
-    minY = y[0], maxY = y[1];
-    width = maxX - minX;
-    height = maxY - minY;
+    var frm, height, i, spriteCanvas, spriteCtx, stack, width, x, y, _i, _len, _ref;
+    _ref = this.paperStack.getBoundingRectangle(), x = _ref.x, y = _ref.y, width = _ref.width, height = _ref.height;
     stack = this.paperStack.getStack();
     spriteCanvas = document.createElement('canvas');
     spriteCanvas.height = height;
@@ -103,7 +102,7 @@
     spriteCtx = spriteCanvas.getContext('2d');
     for (i = _i = 0, _len = stack.length; _i < _len; i = ++_i) {
       frm = stack[i];
-      spriteCtx.putImageData(frm.getImageData(minX, minY, width, height), width * i, 0);
+      spriteCtx.putImageData(frm.getImageData(x, y, width, height), width * i, 0);
     }
     window.open(spriteCanvas.toDataURL());
   };
@@ -435,15 +434,15 @@
 
     DrawingCanvas.prototype.duration = 83;
 
-    function DrawingCanvas() {
+    function DrawingCanvas(width, height) {
       this.mouseup = __bind(this.mouseup, this);
       this.mousemove = __bind(this.mousemove, this);
       this.mousedown = __bind(this.mousedown, this);
       var canvas, ctx, mouseEvent, touchEvent;
       _canvasContainer || (_canvasContainer = document.getElementById("canvas-container"));
       canvas = this.canvas = document.createElement("canvas");
-      canvas.width = PEGBAR.CANVAS_WIDTH;
-      canvas.height = PEGBAR.CANVAS_HEIGHT;
+      canvas.width = width || PEGBAR.CANVAS_WIDTH;
+      canvas.height = height || PEGBAR.CANVAS_HEIGHT;
       for (mouseEvent in _eventNames) {
         touchEvent = _eventNames[mouseEvent];
         _addListener(this, canvas, mouseEvent, touchEvent);
@@ -508,25 +507,29 @@
     };
 
     DrawingCanvas.prototype.getBoundingRectangle = function() {
-      var height, i, imgData, pixels, width, x, y, _i, _j, _ref;
+      var height, i, imgData, width, x, xs, y, ys, _i, _j, _ref;
       _ref = this.canvas, width = _ref.width, height = _ref.height;
       imgData = this.getImageData().data;
-      pixels = {
-        x: [],
-        y: []
-      };
+      xs = [];
+      ys = [];
       for (y = _i = 0; 0 <= height ? _i <= height : _i >= height; y = 0 <= height ? ++_i : --_i) {
         for (x = _j = 0; 0 <= width ? _j <= width : _j >= width; x = 0 <= width ? ++_j : --_j) {
           i = (y * width + x) * 4;
           if (imgData[i + 3] > 0) {
-            pixels.x.push(x);
-            pixels.y.push(y);
+            xs.push(x);
+            ys.push(y);
           }
         }
       }
+      x = _.min(xs);
+      y = _.min(ys);
+      width = _.max(xs) - x;
+      height = _.max(ys) - y;
       return {
-        x: [_.min(pixels.x), _.max(pixels.x)],
-        y: [_.min(pixels.y), _.max(pixels.y)]
+        x: x,
+        y: y,
+        width: width,
+        height: height
       };
     };
 
@@ -921,26 +924,28 @@
     };
 
     PaperStack.prototype.getBoundingRectangle = function() {
-      var boundingRectangles, frame, maxXs, maxYs, minXs, minYs, rectangle, _i, _j, _len, _len1;
-      boundingRectangles = [];
-      for (_i = 0, _len = __stack__.length; _i < _len; _i++) {
-        frame = __stack__[_i];
-        boundingRectangles.push(frame.getBoundingRectangle());
-      }
+      var frame, height, maxXs, maxYs, minXs, minYs, width, x, y, _i, _len, _ref;
       minXs = [];
       maxXs = [];
       minYs = [];
       maxYs = [];
-      for (_j = 0, _len1 = boundingRectangles.length; _j < _len1; _j++) {
-        rectangle = boundingRectangles[_j];
-        minXs.push(rectangle.x[0]);
-        maxXs.push(rectangle.x[1]);
-        minYs.push(rectangle.y[0]);
-        maxYs.push(rectangle.y[1]);
+      for (_i = 0, _len = __stack__.length; _i < _len; _i++) {
+        frame = __stack__[_i];
+        _ref = frame.getBoundingRectangle(), x = _ref.x, y = _ref.y, width = _ref.width, height = _ref.height;
+        minXs.push(x);
+        maxXs.push(x + width);
+        minYs.push(y);
+        maxYs.push(y + height);
       }
+      x = _.min(minXs) - 2;
+      y = _.min(minYs) - 2;
+      width = _.max(maxXs) - x + 2;
+      height = _.max(maxYs) - y + 2;
       return {
-        x: [_.min(minXs) - 2, _.max(maxXs) + 2],
-        y: [_.min(minYs) - 2, _.max(maxYs) + 2]
+        x: x,
+        y: y,
+        width: width,
+        height: height
       };
     };
 

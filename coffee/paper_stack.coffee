@@ -202,19 +202,22 @@ class PEGBAR.PaperStack
     return _playing = false
 
   getBoundingRectangle: ->
-    boundingRectangles = []
-    for frame in __stack__
-      boundingRectangles.push frame.getBoundingRectangle()
-
     minXs = []; maxXs = []
     minYs = []; maxYs = []
-    for rectangle in boundingRectangles
-      minXs.push rectangle.x[0]; maxXs.push rectangle.x[1]
-      minYs.push rectangle.y[0]; maxYs.push rectangle.y[1]
+    for frame in __stack__
+      {x, y, width, height} = frame.getBoundingRectangle()
+      minXs.push x; maxXs.push x + width
+      minYs.push y; maxYs.push y + height
 
+    x = _.min(minXs) - 2
+    y = _.min(minYs) - 2
+    width  = _.max(maxXs) - x + 2
+    height = _.max(maxYs) - y + 2
     return {
-      x: [_.min(minXs) - 2, _.max(maxXs) + 2]
-      y: [_.min(minYs) - 2, _.max(maxYs) + 2]
+      x: x
+      y: y
+      width: width
+      height: height
     } 
     
 

@@ -59,11 +59,11 @@ class PEGBAR.DrawingCanvas
 
   duration: 83
 
-  constructor: ->
+  constructor: (width, height) ->
     _canvasContainer ||= document.getElementById "canvas-container"
     canvas = @canvas = document.createElement "canvas"
-    canvas.width  = PEGBAR.CANVAS_WIDTH
-    canvas.height = PEGBAR.CANVAS_HEIGHT
+    canvas.width  = width  or PEGBAR.CANVAS_WIDTH
+    canvas.height = height or PEGBAR.CANVAS_HEIGHT
     
     _addListener(@, canvas, mouseEvent, touchEvent) for mouseEvent, touchEvent of _eventNames  
 
@@ -114,15 +114,24 @@ class PEGBAR.DrawingCanvas
   getBoundingRectangle: ->
     {width, height} = @canvas
     imgData = @getImageData().data
-    pixels = { x: [], y: [] }
+    xs = []; ys = []
     for y in [0..height]
       for x in [0..width]
         i = (y * width + x) * 4
         if imgData[i + 3] > 0
-          pixels.x.push x
-          pixels.y.push y
+          xs.push x
+          ys.push y
 
-    return { x: [_.min(pixels.x), _.max(pixels.x)], y: [_.min(pixels.y), _.max(pixels.y)] }
+    x = _.min xs
+    y = _.min ys
+    width = _.max(xs) - x
+    height = _.max(ys) - y
+    return { 
+      x: x
+      y: y
+      width: width
+      height: height
+    }
 
 
   clearCanvas: ->

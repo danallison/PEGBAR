@@ -43,16 +43,19 @@ do ->
     }
 
     stack = @paperStack.getStack()
-    scratchFrm = new @DrawingCanvas
-    {width, height} = scratchFrm.canvas
+    {x, y, width, height} = @paperStack.getBoundingRectangle()
+    scratchCanvas = document.createElement 'canvas'
+    scratchCanvas.width = width
+    scratchCanvas.height = height
+    scratchContext = scratchCanvas.getContext '2d'
     opaqueBackground = PEGBAR.BACKGROUND_COLOR.toStringOpaque()
     for frm in stack 
-      scratchFrm.clearCanvas()
-      scratchFrm.ctx.fillStyle = opaqueBackground
-      scratchFrm.ctx.fillRect 0, 0, width, height
-      scratchFrm.ctx.globalCompositeOperation = 'source-over'
-      scratchFrm.drawImage frm.canvas
-      gif.addFrame scratchFrm.getImageData(), {copy: true, delay: frm.duration} 
+      scratchCanvas.width = width
+      scratchContext.fillStyle = opaqueBackground
+      scratchContext.fillRect 0, 0, width, height
+      scratchContext.globalCompositeOperation = 'source-over'
+      scratchContext.drawImage frm.canvas, -x, -y
+      gif.addFrame scratchContext.getImageData(0,0,width,height), {copy: true, delay: frm.duration} 
 
     gif.on 'finished', (blob) =>
       _exportingGif = false
@@ -77,11 +80,7 @@ PEGBAR.exportPNGSpriteSheet = ->
   return
 
 PEGBAR.exportTrimmedPNGSpriteSheet = ->
-  {x, y} = @paperStack.getBoundingRectangle()
-  [minX, maxX] = x
-  [minY, maxY] = y
-  width = maxX - minX
-  height = maxY - minY
+  {x, y, width, height} = @paperStack.getBoundingRectangle()
 
   stack = @paperStack.getStack()
   spriteCanvas = document.createElement 'canvas'
@@ -90,7 +89,7 @@ PEGBAR.exportTrimmedPNGSpriteSheet = ->
 
   spriteCtx = spriteCanvas.getContext '2d'
   for frm, i in stack 
-    spriteCtx.putImageData frm.getImageData(minX, minY, width, height), width * i, 0
+    spriteCtx.putImageData frm.getImageData(x, y, width, height), width * i, 0
 
   window.open spriteCanvas.toDataURL()
   return
